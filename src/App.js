@@ -10,8 +10,21 @@ import bgCloud from './assets/bg_cloud.png';
 import Notification from './components/Notification';
 import { sendEmail } from './utils/emailService';
 import emailjs from '@emailjs/browser';
+import logoPng from './assets/et_dark.png';
 
-const EXCELYTECH_LOGO = 'https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png';
+// Replace EXCELYTECH_LOGO with base64 string
+const EXCELYTECH_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtbC4uLg=='; // <-- Replace with your actual base64 string
+
+// Helper to fetch image as Data URL
+async function getImageDataUrl(url) {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+}
 
 export default function App() {
   // Theme state
@@ -161,7 +174,7 @@ export default function App() {
       });
     } catch (error) {
       console.error('Error adding product:', error);
-      alert(error.message);
+      showNotification(error.message);
     }
   }, [selectedProduct, qty, validateInput, allProducts]);
 
@@ -179,7 +192,7 @@ export default function App() {
       );
     } catch (error) {
       console.error('Error updating quantity:', error);
-      alert(error.message);
+      showNotification(error.message);
     }
   }, [validateInput]);
 
@@ -315,12 +328,11 @@ export default function App() {
       });
   
       // Add PNG logo at the top left
-      const img = new Image();
-      img.src = EXCELYTECH_LOGO;
-      doc.addImage(img.src, 'PNG', 14, 10, 45, 9);
+      const logoDataUrl = await getImageDataUrl(logoPng);
+      doc.addImage(logoDataUrl, 'PNG', 10, 10, 60, 20); // Adjust size as needed
   
       // Add company details
-      let headerY = 10 + 9 + 12; // logo Y + logo height + extra space
+      let headerY = 10 + 20 + 12; // logo Y + logo height + extra space
       doc.setFontSize(10);
       doc.setTextColor(100);
       const companyDetails = [
@@ -469,6 +481,18 @@ export default function App() {
       doc.setFontSize(10);
       doc.setTextColor(100);
       
+      const pageHeight = doc.internal.pageSize.height;
+      const bottomMargin = 20;
+      const minSpaceNeeded = 60; // adjust as needed for your terms section
+
+      if (currentY > pageHeight - minSpaceNeeded - bottomMargin) {
+        doc.addPage();
+        currentY = 20; // or whatever your top margin is
+      }
+
+      // Now add Terms & Conditions at currentY
+      doc.setFontSize(10);
+      doc.setTextColor(100);
       doc.text("Terms & Conditions:", 14, currentY);
       const terms = [
         "1. Validity: This quote is valid for 30 days from the date of issue. Prices are subject to change thereafter.",
@@ -487,13 +511,12 @@ export default function App() {
         currentY += splitText.length * 4.5;
       });
   
-      const pageHeight = doc.internal.pageSize.height;
       let footerY = pageHeight - 15;
       doc.setFontSize(8);
       doc.setTextColor(150);
       const footerText = "Confidential - This document contains proprietary information and is intended solely for the recipient.";
       const splitFooter = doc.splitTextToSize(footerText, 180);
-      doc.text(splitFooter, 14, footerY);
+      doc.text(splitFooter, doc.internal.pageSize.getWidth() / 2, footerY, { align: 'center' });
   
       doc.addPage();
       currentY = 20;
@@ -522,11 +545,13 @@ export default function App() {
       doc.setFontSize(10);
       doc.text("Acceptance:", 14, currentY);
       currentY += 6;
-      doc.text("Customer Signature: _______________________________", 14, currentY);
-      doc.text("Date: ________________", 140, currentY);
+      doc.text("Customer Signature:", 14, currentY);
       currentY += 10;
-      doc.text("ExcelyTech Representative: _______________________", 14, currentY);
-      doc.text("Date: ________________", 140, currentY);
+      doc.text("Date:", 14, currentY);
+      currentY += 10;
+      doc.text("ExcelyTech Representative:", 14, currentY);
+      currentY += 10;
+      doc.text("Date:", 14, currentY);
   
       currentY += 15;
       doc.setTextColor(25, 118, 210);
@@ -548,7 +573,7 @@ export default function App() {
       footerY = pageHeight - 15;
       doc.setFontSize(8);
       doc.setTextColor(150);
-      doc.text(splitFooter, 14, footerY);
+      doc.text(splitFooter, doc.internal.pageSize.getWidth() / 2, footerY, { align: 'center' });
   
       // Generate QR code with summary info
       const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
@@ -561,13 +586,13 @@ export default function App() {
   
       doc.save(`ExcelyTech_Quote_${customerName || "Customer"}_${new Date().toISOString().slice(0, 10)}.pdf`);
   
-      // After PDF is generated, send email if customer email is provided
-        
       setIsGeneratingPDF(false);
+      showNotification("PDF generated successfully!");
       return true;
     } catch (error) {
       console.error("PDF Generation Failed:", error);
       setValidationError(`Error generating PDF: ${error.message || "Please try again"}`);
+      showNotification(`Error generating PDF: ${error.message || "Please try again"}`);
       setIsGeneratingPDF(false);
       return false;
     }
@@ -712,8 +737,10 @@ export default function App() {
           <!-- Acceptance -->
           <div style="margin-bottom: 20px; text-align: left;">
             <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 16px;">Acceptance:</h2>
-            <p style="margin: 5px 0; font-size: 12px;">Customer Signature: _______________________________ &nbsp;&nbsp; Date: ________________</p>
-            <p style="margin: 5px 0; font-size: 12px;">ExcelyTech Representative: _______________________ &nbsp;&nbsp; Date: ________________</p>
+            <p style="margin: 5px 0; font-size: 12px;">Customer Signature:</p>
+            <p style="margin: 5px 0; font-size: 12px;">Date:</p>
+            <p style="margin: 5px 0; font-size: 12px;">ExcelyTech Representative:</p>
+            <p style="margin: 5px 0; font-size: 12px;">Date:</p>
           </div>
   
           <!-- Appreciation and Contact -->
@@ -1290,22 +1317,89 @@ export default function App() {
               </div>
             </div>
             {showAddProductForm && (
-              <form onSubmit={handleAddProductSubmit} style={{ marginTop: 16, background: '#f7f9fc', borderRadius: 8, padding: 16, boxShadow: '0 2px 8px rgba(30,136,229,0.07)', maxWidth: 500 }}>
-                <div style={{ marginBottom: 10 }}>
-                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Product Name</label>
-                  <input type="text" placeholder="Name" value={newProduct.name} onChange={e => handleNewProductChange('name', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
-                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Description</label>
-                  <input type="text" placeholder="Description" value={newProduct.description} onChange={e => handleNewProductChange('description', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
-                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>License</label>
-                  <input type="text" placeholder="License" value={newProduct.license} onChange={e => handleNewProductChange('license', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
-                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Unit Cost</label>
-                  <input type="number" placeholder="Unit Cost" value={newProduct.unitCost} min={0} onChange={e => handleNewProductChange('unitCost', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
-                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Margin (%)</label>
-                  <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd' }} />
+              <form onSubmit={handleAddProductSubmit} style={{
+                background: 'rgba(255,255,255,0.98)',
+                borderRadius: 20,
+                boxShadow: '0 8px 32px rgba(30,136,229,0.10)',
+                padding: 36,
+                maxWidth: 640,
+                margin: '0 auto',
+                marginTop: 32,
+                marginBottom: 32,
+                border: '1.5px solid #e3e8ee',
+                transition: 'box-shadow 0.2s'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
+                  <span style={{ fontSize: 32, color: '#1976d2', marginRight: 14 }}>🛒</span>
+                  <h2 style={{ margin: 0, fontWeight: 800, fontSize: 26, color: '#1976d2', letterSpacing: 1 }}>Add New Product</h2>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="submit" style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>Add</button>
-                  <button type="button" onClick={() => setShowAddProductForm(false)} style={{ background: '#fff', color: '#1976d2', border: '1.5px solid #90caf9', borderRadius: 6, padding: '6px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>Cancel</button>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 24,
+                  marginBottom: 28
+                }}>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Product Name</label>
+                    <input type="text" placeholder="Name" value={newProduct.name} onChange={e => handleNewProductChange('name', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>Enter a unique product name.</small>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Description</label>
+                    <input type="text" placeholder="Description" value={newProduct.description} onChange={e => handleNewProductChange('description', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>Briefly describe the product.</small>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>License</label>
+                    <input type="text" placeholder="License" value={newProduct.license} onChange={e => handleNewProductChange('license', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>E.g., Annual, Perpetual, etc.</small>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Unit Cost</label>
+                    <input type="number" placeholder="Unit Cost" value={newProduct.unitCost} min={0} onChange={e => handleNewProductChange('unitCost', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>Enter the cost per unit.</small>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Margin (%)</label>
+                    <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>Recommended: 35% or higher.</small>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 18, justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button type="submit" style={{
+                    background: 'linear-gradient(90deg, #1976d2 60%, #64b5f6 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '12px 36px',
+                    fontWeight: 800,
+                    fontSize: 18,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(25,118,210,0.10)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    transition: 'background 0.2s'
+                  }}>
+                    <span style={{ fontSize: 20 }}>➕</span> Add
+                  </button>
+                  <button type="button" onClick={() => setShowAddProductForm(false)} style={{
+                    background: '#fff',
+                    color: '#1976d2',
+                    border: '1.5px solid #90caf9',
+                    borderRadius: 10,
+                    padding: '12px 36px',
+                    fontWeight: 800,
+                    fontSize: 18,
+                    cursor: 'pointer'
+                  }}>
+                    Cancel
+                  </button>
                 </div>
               </form>
             )}

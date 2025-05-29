@@ -574,4 +574,14 @@ export const sendCommitmentOptimization = async (data) => {
     console.error('Error sending commitment optimization:', error);
     throw error;
   }
-}; 
+};
+
+export async function imageToDataUrl(imagePath) {
+  const response = await fetch(imagePath);
+  const blob = await response.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
+} 
