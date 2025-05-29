@@ -630,11 +630,6 @@ export default function App() {
       // Generate the email content to match the PDF structure
       const emailContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
-          <!-- Header with Logo -->
-          <div style="text-align: left; margin-bottom: 20px; padding-bottom: 10px;">
-            <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" alt="ExcelyTech Logo" style="height: 30px; margin-bottom: 10px;">
-          </div>
-  
           <!-- Company Details -->
           <div style="margin-bottom: 10px; text-align: left; font-size: 12px; color: #666;">
             <p style="margin: 5px 0;">Ontario, Canada</p>
