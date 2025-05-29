@@ -269,12 +269,18 @@ export default function App() {
       setIsGeneratingPDF(true);
       setValidationError("");
 
-      const doc = new jsPDF();
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+
       // Add PNG logo at the top left
       const img = new Image();
       img.src = logoLightPng;
       doc.addImage(img.src, 'PNG', 14, 10, 45, 9);
-      // Add more vertical space before company details
+
+      // Add company details
       let headerY = 10 + 9 + 12; // logo Y + logo height + extra space
       doc.setFontSize(10);
       doc.setTextColor(100);
@@ -514,7 +520,7 @@ export default function App() {
       const firstPageHeight = doc.internal.pageSize.getHeight();
       doc.addImage(qrDataUrl, 'PNG', pageWidth - qrSize - 30, firstPageHeight - qrSize - 70, qrSize, qrSize);
 
-      doc.save(`ExcelyTech-Quote-${customerName || "Customer"}-${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).replace(/\//g, '-')}.pdf`);
+      doc.save(`ExcelyTech_Quote_${customerName || "Customer"}_${new Date().toISOString().slice(0, 10)}.pdf`);
 
       // After PDF is generated, send email if customer email is provided
       if (customerEmail) {
@@ -534,10 +540,12 @@ export default function App() {
       }
 
       setIsGeneratingPDF(false);
+      return true;
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      setValidationError("Error generating PDF. Please try again.");
+      console.error("PDF Generation Failed:", error);
+      setValidationError(`Error generating PDF: ${error.message || "Please try again"}`);
       setIsGeneratingPDF(false);
+      return false;
     }
   };
 
