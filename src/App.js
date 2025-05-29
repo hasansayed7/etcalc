@@ -519,22 +519,7 @@ export default function App() {
       doc.save(`ExcelyTech_Quote_${customerName || "Customer"}_${new Date().toISOString().slice(0, 10)}.pdf`);
   
       // After PDF is generated, send email if customer email is provided
-      if (customerEmail) {
-        try {
-          const emailData = {
-            to_email: customerEmail,
-            subject: `Quote for ${customerName} - ${new Date().toLocaleDateString()}`,
-            message: `Dear ${salutation} ${customerName},\n\nThank you for your interest in our products. Please find attached your quote.\n\nBest regards,\nExcellyTech Team`
-          };
-  
-          await sendEmail(emailData);
-          showNotification("Quote has been sent to your email!");
-        } catch (error) {
-          console.error('Error sending email:', error);
-          showNotification("Quote generated but failed to send email. Please try again later.");
-        }
-      }
-  
+        
       setIsGeneratingPDF(false);
       return true;
     } catch (error) {
@@ -547,51 +532,67 @@ export default function App() {
 
   const handleSendEmail = async () => {
     try {
+      if (!validateQuoteGeneration()) {
+        throw new Error("Please validate quote details first");
+      }
       if (!customerEmail) {
         throw new Error("Please enter customer email first");
       }
-
+  
       setIsGeneratingPDF(true);
-      
-      // Generate the email content with the same structure as the PDF
+  
+      // Generate QR code with summary info
+      const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
+      const qrDataUrl = await QRCode.toDataURL(qrText, { width: 80, margin: 1 });
+  
+      // Generate the email content to match the PDF structure
       const emailContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
           <!-- Header with Logo -->
-          <div style="text-align: left; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+          <div style="text-align: left; margin-bottom: 20px; padding-bottom: 10px;">
             <img src="${logoLightPng}" alt="ExcelyTech Logo" style="height: 30px; margin-bottom: 10px;">
           </div>
-
-          <!-- Contact Details -->
-          <div style="margin-bottom: 20px; text-align: left;">
-            <p style="margin: 8px 0; text-align: left;">Ontario, Canada</p>
-            <p style="margin: 8px 0; text-align: left;">289-291-6377</p>
-            <p style="margin: 8px 0; text-align: left;">info@excelytech.com</p>
+  
+          <!-- Company Details -->
+          <div style="margin-bottom: 10px; text-align: left; font-size: 12px; color: #666;">
+            <p style="margin: 5px 0;">Ontario, Canada</p>
+            <p style="margin: 5px 0;">289-291-6377</p>
+            <p style="margin: 5px 0;">info@excelytech.com</p>
           </div>
-
+  
+          <!-- Horizontal Line -->
+          <div style="border-bottom: 1px solid #e0e0e0; margin-bottom: 10px;"></div>
+  
           <!-- Quote Details -->
-          <div style="margin-bottom: 20px; text-align: left;">
-            <p style="margin: 8px 0; text-align: left;"><strong>Quote Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <p style="margin: 8px 0; text-align: left;"><strong>Quote #:</strong> ${Math.floor(1000 + Math.random() * 9000)}</p>
-            <p style="margin: 8px 0; text-align: left;"><strong>Prepared for:</strong> ${salutation} ${customerName || "Customer"} <strong>**Quote Valid for 30 Days**</strong></p>
+          <div style="margin-bottom: 20px; text-align: left; font-size: 12px; color: #666;">
+            <p style="margin: 5px 0;">Quote Date: ${new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</p>
+            <p style="margin: 5px 0;">Quote #: ${Math.floor(1000 + Math.random() * 9000)}</p>
+            <p style="margin: 5px 0;">Prepared for: ${customerName || "Customer"} <span style="color: #d32f2f;">**Quote Valid for 30 Days**</span></p>
           </div>
-
+  
           <!-- Greeting -->
           <div style="margin-bottom: 20px; text-align: left;">
-            <p style="margin: 8px 0; text-align: left;">${salutation} ${customerName || "Customer"},</p>
-            <p style="margin: 8px 0; text-align: left;">Thank you for choosing ExcelyTech for your backup and security needs. We are pleased to present this detailed quote for our services, tailored to meet your requirements. Below, you will find a comprehensive breakdown of your proposed solution:</p>
+            <p style="margin: 5px 0; font-size: 14px; font-weight: bold;">${salutation} ${customerName || "Customer"},</p>
+            <p style="margin: 5px 0; font-size: 12px;">Thank you for choosing ExcelyTech for your backup and security needs. We are pleased to present this detailed quote for our services, tailored to meet your requirements. Below, you will find a comprehensive breakdown of your proposed solution:</p>
           </div>
-
+  
           <!-- Quote Summary -->
           <div style="margin-bottom: 20px; text-align: left;">
-            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 18px; text-align: left;">Quote Summary: ${getPackageName(products)}</h2>
-            <p style="margin: 8px 0; text-align: left;">Billing Cycle: ${billingCycle === 'monthly' ? 'Monthly subscription - You will be charged this amount every month' : 'Annual subscription - You will be charged this amount once per year'}</p>
+            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 16px;">Quote Summary: ${getPackageName(products)}</h2>
+            <p style="margin: 5px 0; font-size: 12px; color: #666;">Billing Cycle: ${billingCycle === 'monthly' ? 
+              'Monthly subscription - You will be charged this amount every month' : 
+              'Annual subscription - You will be charged this amount once per year'}</p>
           </div>
-
+  
           <!-- Products Table -->
           <div style="margin-bottom: 20px; text-align: left;">
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; text-align: left;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 12px;">
               <thead>
-                <tr style="background-color: #1e88e5; color: white; text-align: left;">
+                <tr style="background-color: #1e88e5; color: white;">
                   <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Product Name</th>
                   <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Description</th>
                   <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Qty</th>
@@ -601,7 +602,7 @@ export default function App() {
               </thead>
               <tbody>
                 ${products.map(p => `
-                  <tr style="border-bottom: 1px solid #e0e0e0; text-align: left;">
+                  <tr style="border-bottom: 1px solid #e0e0e0;">
                     <td style="padding: 8px; text-align: left;">${p.name}</td>
                     <td style="padding: 8px; text-align: left;">${p.description}</td>
                     <td style="padding: 8px; text-align: right;">${p.qty}</td>
@@ -609,21 +610,21 @@ export default function App() {
                     <td style="padding: 8px; text-align: right;">$${(getPricingData(p, p.qty).recommendedPrice * p.qty * billingMultiplier).toFixed(2)}</td>
                   </tr>
                 `).join('')}
-                <tr style="text-align: left;">
+                <tr style="border-bottom: 1px solid #e0e0e0;">
                   <td style="padding: 8px; text-align: left;" colspan="2">Implementation & Support</td>
                   <td style="padding: 8px; text-align: right;">1</td>
                   <td style="padding: 8px; text-align: right;">$${proFeeForCalc.toFixed(2)}</td>
                   <td style="padding: 8px; text-align: right;">$${proFeeForCalc.toFixed(2)}</td>
                 </tr>
-                <tr style="text-align: left;">
+                <tr style="border-bottom: 1px solid #e0e0e0;">
                   <td style="padding: 8px; text-align: left;" colspan="4">Tax (13% HST)</td>
                   <td style="padding: 8px; text-align: right;">$${taxOnCustomer.toFixed(2)}</td>
                 </tr>
-                <tr style="text-align: left;">
+                <tr style="border-bottom: 1px solid #e0e0e0;">
                   <td style="padding: 8px; text-align: left;" colspan="4">Payment Processing${waiveStripe ? " waived" : ""}</td>
                   <td style="padding: 8px; text-align: right;">$${stripeFee.toFixed(2)}</td>
                 </tr>
-                <tr style="font-weight: bold; text-align: left;">
+                <tr style="font-weight: bold; background-color: #f5f5f5;">
                   <td style="padding: 8px; text-align: left;" colspan="3">TOTAL (${billingCycle === 'monthly' ? 'Monthly' : 'Annual'} Charge)</td>
                   <td style="padding: 8px; text-align: right;"></td>
                   <td style="padding: 8px; text-align: right;">$${finalTotal.toFixed(2)}</td>
@@ -631,34 +632,70 @@ export default function App() {
               </tbody>
             </table>
           </div>
-
+  
           <!-- Terms & Conditions -->
           <div style="margin-bottom: 20px; text-align: left;">
-            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 18px; text-align: left;">Terms & Conditions:</h2>
-            <ol style="padding-left: 20px; margin: 0; text-align: left;">
-              <li style="margin-bottom: 8px; text-align: left;">Validity: This quote is valid for 30 days from the date of issue. Prices are subject to change thereafter.</li>
-              <li style="margin-bottom: 8px; text-align: left;">Payment Terms: Invoices are due within 15 days of receipt. ${billingCycle === 'monthly' ? 'Monthly subscriptions will be automatically charged on the 1st of each month.' : 'Annual subscriptions require full payment upfront within 15 days of invoice receipt.'}</li>
-              <li style="margin-bottom: 8px; text-align: left;">Service Commencement: Services will commence upon receipt of signed agreement and initial payment.</li>
-              <li style="margin-bottom: 8px; text-align: left;">Cancellation Policy: Subscriptions may be canceled with 30 days' written notice. No refunds will be issued for partial terms.</li>
-              <li style="margin-bottom: 8px; text-align: left;">Limitation of Liability: ExcelyTech shall not be liable for any indirect, incidental, or consequential damages arising from the use of our services.</li>
-              <li style="margin-bottom: 8px; text-align: left;">Governing Law: This agreement shall be governed by the laws of Ontario, Canada.</li>
+            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 16px;">Terms & Conditions:</h2>
+            <ol style="padding-left: 20px; margin: 0; font-size: 12px; color: #666;">
+              <li style="margin-bottom: 8px;">Validity: This quote is valid for 30 days from the date of issue. Prices are subject to change thereafter.</li>
+              <li style="margin-bottom: 8px;">Payment Terms: Invoices are due within 15 days of receipt. ${billingCycle === 'monthly' ? 
+                'Monthly subscriptions will be automatically charged on the 1st of each month.' : 
+                'Annual subscriptions require full payment upfront within 15 days of invoice receipt.'}</li>
+              <li style="margin-bottom: 8px;">Service Commencement: Services will commence upon receipt of signed agreement and initial payment.</li>
+              <li style="margin-bottom: 8px;">Cancellation Policy: Subscriptions may be canceled with 30 days' written notice. No refunds will be issued for partial terms.</li>
+              <li style="margin-bottom: 8px;">Limitation of Liability: ExcelyTech shall not be liable for any indirect, incidental, or consequential damages arising from the use of our services.</li>
+              <li style="margin-bottom: 8px;">Governing Law: This agreement shall be governed by the laws of Ontario, Canada.</li>
             </ol>
           </div>
-
+  
+          <!-- Key Terms and Conditions (MSA) -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <h2 style="color: #1e88e5; margin: 0till 0 10px; font-size: 16px;">Key Terms and Conditions:</h2>
+            <ol style="padding-left: 20px; margin: 0; font-size: 12px; color: #666;">
+              <li style="margin-bottom: 8px;">Quote Definition: This Product Quotation outlines the costs and terms for Products/Services, forming part of the Master Agreement.</li>
+              <li style="margin-bottom: 8px;">Payment: Fees are due monthly on the 1st via direct debit; late fees apply. Hardware/software must be paid before deployment. Fees may increase after 12 months (up to 10% annually with 60 days' notice).</li>
+              <li style="margin-bottom: 8px;">Term: The agreement lasts 36 months, auto-renewing yearly unless terminated with 60 days' notice.</li>
+              <li style="margin-bottom: 8px;">Termination/Cancellation: Early termination incurs remaining fees; Product cancellation incurs a 15% restocking fee (no returns for delivered/custom items).</li>
+              <li style="margin-bottom: 8px;">Confidentiality: Quote details are confidential and must not be disclosed.</li>
+              <li style="margin-bottom: 8px;">Warranties: Product warranties are passed on; out-of-warranty support requires a separate quote.</li>
+              <li style="margin-bottom: 8px;">Additional Costs: Costs (hourly, after-hours, agreement rates) and additional services are defined in the Product Quotation.</li>
+            </ol>
+          </div>
+  
+          <!-- Acceptance -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 16px;">Acceptance:</h2>
+            <p style="margin: 5px 0; font-size: 12px;">Customer Signature: _______________________________ &nbsp;&nbsp; Date: ________________</p>
+            <p style="margin: 5px 0; font-size: 12px;">ExcelyTech Representative: _______________________ &nbsp;&nbsp; Date: ________________</p>
+          </div>
+  
+          <!-- Appreciation and Contact -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <p style="color: #1e88e5; margin: 5px 0; font-size: 12px;">We appreciate your business!</p>
+            <p style="margin: 5px 0; font-size: 12px; color: #666;">Ontario, Canada</p>
+            <p style="margin: 5px 0; font-size: 12px; color: #666;">289-291-6377</p>
+            <p style="margin: 5px 0; font-size: 12px; color: #666;">info@excelytech.com</p>
+          </div>
+  
+          <!-- QR Code -->
+          <div style="margin-bottom: 20px; text-align: right;">
+            <img src="${qrDataUrl}" alt="Quote QR Code" style="width: 80px; height: 80px;">
+          </div>
+  
           <!-- Confidential Notice -->
-          <div style="margin-bottom: 20px; font-size: 12px; color: #666; text-align: center;">
+          <div style="font-size: 10px; color: #666; text-align: center; border-top: 1px solid #e0e0e0; padding-top: 10px;">
             <p style="margin: 5px 0;">Confidential - This document contains proprietary information and is intended solely for the recipient.</p>
           </div>
         </div>
       `;
-
+  
       const emailParams = {
         to_email: customerEmail,
         from_name: "ExcelyTech Sales Team",
-        subject: `Quote Summary for ${customerName || "Customer"}`,
+        subject: `Quote for ${customerName || "Customer"} - ${new Date().toLocaleDateString()}`,
         message: emailContent,
       };
-
+  
       await sendEmail(emailParams);
       showNotification("Email sent successfully!");
       setIsGeneratingPDF(false);
