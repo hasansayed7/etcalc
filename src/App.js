@@ -584,10 +584,20 @@ export default function App() {
       const firstPageHeight = doc.internal.pageSize.getHeight();
       doc.addImage(qrDataUrl, 'PNG', pageWidth - qrSize - 30, firstPageHeight - qrSize - 70, qrSize, qrSize);
   
+      // Add footer to every page
+      const pageCount = doc.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        let footerY = doc.internal.pageSize.getHeight() - 15;
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(splitFooter, doc.internal.pageSize.getWidth() / 2, footerY, { align: 'center' });
+      }
+  
       doc.save(`ExcelyTech_Quote_${customerName || "Customer"}_${new Date().toISOString().slice(0, 10)}.pdf`);
   
       setIsGeneratingPDF(false);
-      showNotification("PDF generated successfully!");
+      showNotification("PDF Downloaded Successfully!");
       return true;
     } catch (error) {
       console.error("PDF Generation Failed:", error);
