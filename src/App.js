@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from 'qrcode';
 import { PRODUCTS } from './data/products';
-import { getPricingData, getPackageName, getRecommendations, formatCurrency, FINANCIAL_CONSTANTS } from './utils/pricing';
+import { getPricingData, getPackageName, getRecommendations } from './utils/pricing';
 import ErrorBoundary from './components/ErrorBoundary';
 import logoLightPng from './assets/et_light.png';
 import Login from './components/Login';
@@ -15,12 +15,6 @@ import { sendEmail } from './utils/emailService';
 export default function App() {
   // Theme state
   const [darkMode, setDarkMode] = useState(false);
-
-  useEffect(() => {
-    document.body.style.backgroundColor = darkMode ? "#181c24" : "#f7f9fc";
-  }, [darkMode]);
-
-  // Always require login on page load
   const [authenticated, setAuthenticated] = useState(false);
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0].name);
@@ -35,21 +29,50 @@ export default function App() {
   const [customerCompany, setCustomerCompany] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  const [validationError, setValidationError] = useState("");
-  const [showIn, setShowIn] = useState('selling');
-  const [canTime, setCanTime] = useState(new Date());
-  const [indTime, setIndTime] = useState(new Date());
-  const [usTime, setUsTime] = useState(new Date());
   const [notification, setNotification] = useState("");
   const [notificationKey, setNotificationKey] = useState(0);
-
-  // Add state for dynamic products and new product form
   const [customProducts, setCustomProducts] = useState([]);
   const [showAddProductForm, setShowAddProductForm] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', description: '', license: '', unitCost: 0, margin: 35 });
+  const [validationError, setValidationError] = useState("");
+  const [canTime, setCanTime] = useState(new Date());
+  const [indTime, setIndTime] = useState(new Date());
+  const [usTime, setUsTime] = useState(new Date());
 
-  // Helper to get all products (static + custom)
-  const allProducts = [...PRODUCTS, ...customProducts];
+  // Memoize allProducts
+  const allProducts = useMemo(() => [...PRODUCTS, ...customProducts], [customProducts]);
+
+  // Calculate billing multiplier
+  const billingMultiplier = billingCycle === "annual" ? 12 : 1;
+
+  // Calculate pro fee
+  const proFeeMonthly = serviceCharge / 12;
+  const proFeeForCalc = billingCycle === "monthly" ? proFeeMonthly : serviceCharge;
+
+  // Memoize calculations
+  const calculations = useMemo(() => {
+    const subtotal = products.reduce((sum, p) => {
+      const pricingData = getPricingData(p, p.qty);
+      return sum + pricingData.recommendedPrice * p.qty;
+    }, 0) * billingMultiplier;
+
+    const tax = (subtotal + proFeeForCalc) * 0.13;
+    const stripeBase = subtotal + proFeeForCalc + tax;
+    const stripeFee = waiveStripe ? 0 : stripeBase * 0.0299 + 0.30;
+    const total = stripeBase + stripeFee;
+
+    return {
+      subtotal,
+      tax,
+      stripeFee,
+      total,
+      stripeBase
+    };
+  }, [products, billingMultiplier, proFeeForCalc, waiveStripe]);
+
+  useEffect(() => {
+    document.body.style.backgroundColor = darkMode ? "#181c24" : "#f7f9fc";
+  }, [darkMode]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -60,7 +83,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const canTimeString = canTime.toLocaleTimeString('en-CA', { timeZone: 'America/Toronto', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  // Remove unused canTimeString since we're using usCanTime
   const indTimeString = indTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const usTimeString = usTime.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -86,10 +109,34 @@ export default function App() {
     }
   }, []);
 
+  // Use handleCustomerNameChange in the input field
   const handleCustomerNameChange = (e) => {
     const value = e.target.value;
     if (validateInput(value, 'customerName')) {
       setCustomerName(value);
+      setValidationError("");
+    } else {
+      setValidationError("Please enter a valid name");
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setCustomerEmail(value);
+    if (value && !validateEmail(value)) {
+      setValidationError("Please enter a valid email address");
+    } else {
+      setValidationError("");
+    }
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value;
+    setCustomerPhone(value);
+    if (value && !validatePhone(value)) {
+      setValidationError("Please enter a valid phone number");
+    } else {
+      setValidationError("");
     }
   };
 
@@ -198,8 +245,6 @@ export default function App() {
     }} />;
   }
 
-  const billingMultiplier = billingCycle === "annual" ? 12 : 1;
-
   const pax8Subtotal = products.reduce((sum, p) => {
     const pricingData = getPricingData(p, p.qty);
     return sum + pricingData.unitCost * p.qty;
@@ -207,20 +252,14 @@ export default function App() {
 
   const pax8Total = pax8Subtotal * 1.13 * billingMultiplier;
 
-  const customerSubtotal = products.reduce((sum, p) => {
-    const pricingData = getPricingData(p, p.qty);
-    return sum + pricingData.recommendedPrice * p.qty;
-  }, 0) * billingMultiplier;
+  const customerSubtotal = calculations.subtotal;
 
-  const proFeeMonthly = serviceCharge / 12;
-  const proFeeForCalc = billingCycle === "monthly" ? proFeeMonthly : serviceCharge;
+  const taxOnCustomer = calculations.tax;
 
-  const taxOnCustomer = (customerSubtotal + proFeeForCalc) * 0.13;
+  const stripeBase = calculations.subtotal + calculations.stripeFee;
+  const stripeFee = waiveStripe ? 0 : calculations.stripeFee;
 
-  const stripeBase = customerSubtotal + proFeeForCalc + taxOnCustomer;
-  const stripeFee = waiveStripe ? 0 : stripeBase * 0.0299 + 0.30;
-
-  const finalTotal = stripeBase + stripeFee;
+  const finalTotal = calculations.total;
 
   const profitBeforeTax = customerSubtotal - (pax8Subtotal * billingMultiplier) + 
                          (billingCycle === "monthly" ? proFeeMonthly : serviceCharge);
@@ -538,8 +577,12 @@ export default function App() {
       if (!customerEmail) {
         throw new Error("Please enter customer email first");
       }
+      if (!validateEmail(customerEmail)) {
+        throw new Error("Please enter a valid email address");
+      }
   
       setIsGeneratingPDF(true);
+      setValidationError("");
   
       // Generate QR code with summary info
       const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
@@ -701,6 +744,7 @@ export default function App() {
       setIsGeneratingPDF(false);
     } catch (error) {
       console.error("Email Sending Failed:", error);
+      setValidationError(error.message);
       showNotification(`Failed to send email: ${error.message}`);
       setIsGeneratingPDF(false);
     }
@@ -767,6 +811,16 @@ export default function App() {
     if (selectedProduct === name) {
       setSelectedProduct(PRODUCTS[0].name);
     }
+  };
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    const re = /^\+?[\d\s-]{10,}$/;
+    return re.test(phone);
   };
 
   return (
@@ -1013,10 +1067,11 @@ export default function App() {
                 <input
                   type="text"
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  onChange={handleCustomerNameChange}
                   className="customer-info-input"
                   placeholder="Enter customer name"
                 />
+                {validationError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{validationError}</span>}
               </div>
               <div className="customer-info-field">
                 <label className="customer-info-label">
@@ -1043,7 +1098,7 @@ export default function App() {
                 <input
                   type="email"
                   value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e)}
                   className="customer-info-input"
                   placeholder="Enter customer email"
                 />
@@ -1058,7 +1113,7 @@ export default function App() {
                 <input
                   type="tel"
                   value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  onChange={(e) => handlePhoneChange(e)}
                   className="customer-info-input"
                   placeholder="Enter customer phone"
                 />
@@ -1540,7 +1595,7 @@ export default function App() {
                       Customer Total (After Payment Processing Fee):
                     </td>
                     <td style={{ padding: "10px 0", textAlign: "right", fontWeight: "bold", color: styles.primaryColor }}>
-                      ${ (customerSubtotal + proFeeForCalc + taxOnCustomer + stripeFee).toFixed(2) } CAD
+                      ${calculations.stripeBase.toFixed(2)} CAD
                     </td>
                   </tr>
                   <tr>
