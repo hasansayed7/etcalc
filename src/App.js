@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from 'qrcode';
 import { PRODUCTS } from './data/products';
-import { getPricingData, getPackageName, getRecommendations } from './utils/pricing';
+import { getPricingData, getPackageName, getRecommendations, generateEmailSubject } from './utils/pricing';
 import ErrorBoundary from './components/ErrorBoundary';
 import logoLightPng from './assets/et_light.png';
 import Login from './components/Login';
@@ -12,6 +12,8 @@ import logoDarkPng from './assets/et_dark.png';
 import Notification from './components/Notification';
 import { sendEmail } from './utils/emailService';
 import emailjs from '@emailjs/browser';
+
+const EXCELYTECH_LOGO = 'https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png';
 
 export default function App() {
   // Theme state
@@ -730,13 +732,18 @@ export default function App() {
           <div style="font-size: 10px; color: #666; text-align: center; border-top: 1px solid #e0e0e0; padding-top: 10px;">
             <p style="margin: 5px 0;">Confidential - This document contains proprietary information and is intended solely for the recipient.</p>
           </div>
+
+          <div style="text-align:center; margin-top:40px;">
+            <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" alt="ExcelyTech Logo" class="logo">
+          </div>
         </div>
       `;
   
+      const quoteNumber = `QT${new Date().getFullYear()}${String(Math.floor(1000 + Math.random() * 9000)).padStart(4, '0')}`;
       const emailParams = {
         to_email: customerEmail,
         from_name: "ExcelyTech Sales Team",
-        subject: `Quote for ${customerName || "Customer"} - ${new Date().toLocaleDateString()}`,
+        subject: generateEmailSubject(customerName, billingCycle === 'annual' ? 'ANNUAL' : 'MONTHLY'),
         message: emailContent,
       };
   
