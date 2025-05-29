@@ -9,6 +9,7 @@ import logoLightPng from './assets/et_light.png';
 import Login from './components/Login';
 import bgCloud from './assets/bg_cloud.png';
 import logoDarkPng from './assets/et_dark.png';
+import Notification from './components/Notification';
 
 export default function App() {
   // Theme state
@@ -37,17 +38,34 @@ export default function App() {
   const [showIn, setShowIn] = useState('selling');
   const [canTime, setCanTime] = useState(new Date());
   const [indTime, setIndTime] = useState(new Date());
+  const [usTime, setUsTime] = useState(new Date());
+  const [notification, setNotification] = useState("");
+  const [notificationKey, setNotificationKey] = useState(0);
+
+  // Add state for dynamic products and new product form
+  const [customProducts, setCustomProducts] = useState([]);
+  const [showAddProductForm, setShowAddProductForm] = useState(false);
+  const [newProduct, setNewProduct] = useState({ name: '', description: '', license: '', unitCost: 0, margin: 35 });
+
+  // Helper to get all products (static + custom)
+  const allProducts = [...PRODUCTS, ...customProducts];
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCanTime(new Date());
       setIndTime(new Date());
+      setUsTime(new Date());
     }, 1000);
     return () => clearInterval(interval);
   }, []);
 
   const canTimeString = canTime.toLocaleTimeString('en-CA', { timeZone: 'America/Toronto', hour: '2-digit', minute: '2-digit', second: '2-digit' });
   const indTimeString = indTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const usTimeString = usTime.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  // Always display only one time for US EST / CAN, using US EST time
+  const usCanLabel = 'US EST / CAN';
+  const usCanTime = usTimeString;
 
   const handleQtyWheel = (e) => {
     e.stopPropagation();
@@ -79,7 +97,7 @@ export default function App() {
       if (!validateInput(qty, 'quantity')) {
         throw new Error("Quantity must be a positive integer");
       }
-      const product = PRODUCTS.find(p => p.name === selectedProduct);
+      const product = allProducts.find(p => p.name === selectedProduct);
       if (!product) {
         throw new Error("Selected product not found");
       }
@@ -96,7 +114,7 @@ export default function App() {
       console.error('Error adding product:', error);
       alert(error.message);
     }
-  }, [selectedProduct, qty, validateInput]);
+  }, [selectedProduct, qty, validateInput, allProducts]);
 
   const removeProduct = useCallback((name) => {
     setProducts(prev => prev.filter(p => p.name !== name));
@@ -220,20 +238,24 @@ export default function App() {
 
   const recommendations = getRecommendations(products, serviceCharge, billingCycle, profitBeforeTax);
 
+  const showNotification = (msg) => {
+    setNotification(msg);
+    setNotificationKey(prev => prev + 1);
+  };
+
   const validateQuoteGeneration = () => {
     if (!customerName.trim()) {
-      setValidationError("Please enter customer name");
+      showNotification("Please enter customer name");
       return false;
     }
     if (products.length === 0) {
-      setValidationError("Please add at least one product");
+      showNotification("Please add at least one product");
       return false;
     }
     if (serviceCharge < 0) {
-      setValidationError("Service charge cannot be negative");
+      showNotification("Service charge cannot be negative");
       return false;
     }
-    setValidationError("");
     return true;
   };
 
@@ -283,13 +305,13 @@ export default function App() {
       doc.setFontSize(12);
       doc.setTextColor(0);
       const greeting = `${salutation} ${customerName || "Customer"},`;
-      doc.text(greeting, 14, headerY + 46);
+      doc.text(greeting, 14, headerY + 24);
       
       doc.setFontSize(11);
       const introText = [
         "Thank you for choosing ExcelyTech for your backup and security needs. We are pleased to present this detailed quote for our services, tailored to meet your requirements. Below, you will find a comprehensive breakdown of your proposed solution:"
       ];
-      let currentY = headerY + 56;
+      let currentY = headerY + 34;
       introText.forEach(line => {
         const splitText = doc.splitTextToSize(line, 180);
         doc.text(splitText, 14, currentY);
@@ -502,6 +524,63 @@ export default function App() {
     return pricingData.margin < 20;
   });
 
+  // Add a handler for resetting customer info fields only
+  const handleResetCustomerInfo = () => {
+    setCustomerName("");
+    setSalutation("Mr.");
+    setCustomerEmail("");
+    setCustomerAddress("");
+    setCustomerCompany("");
+    setCustomerPhone("");
+    showNotification("Done");
+  };
+
+  const handleAddProductClick = () => {
+    setShowAddProductForm(true);
+    setNewProduct({ name: '', description: '', license: '', unitCost: 0, margin: 35 });
+  };
+
+  const handleNewProductChange = (field, value) => {
+    setNewProduct(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddProductSubmit = (e) => {
+    e.preventDefault();
+    if (!newProduct.name.trim()) {
+      showNotification('Product name is required');
+      return;
+    }
+    if (allProducts.some(p => p.name === newProduct.name.trim())) {
+      showNotification('Product name must be unique');
+      return;
+    }
+    // Add a default pricingSlabs array for compatibility
+    const productToAdd = {
+      ...newProduct,
+      qty: 1,
+      pricingSlabs: [{
+        minQty: 1,
+        maxQty: 9999,
+        unitCost: Number(newProduct.unitCost),
+        margin: Number(newProduct.margin),
+        recommendedPrice: Number(newProduct.unitCost) * (1 + Number(newProduct.margin) / 100)
+      }],
+    };
+    setCustomProducts(prev => [...prev, productToAdd]);
+    setShowAddProductForm(false);
+    setSelectedProduct(newProduct.name);
+    showNotification('Product added');
+  };
+
+  // Handler to remove a custom product
+  const handleRemoveCustomProduct = (name) => {
+    setCustomProducts(prev => prev.filter(p => p.name !== name));
+    // If the removed product is currently selected, reset selection
+    if (selectedProduct === name) {
+      setSelectedProduct(PRODUCTS[0].name);
+    }
+  };
+
   return (
     <ErrorBoundary>
       <div
@@ -629,8 +708,8 @@ export default function App() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
-                <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>CAN</span>
-                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: '#333' }}>{canTimeString}</span>
+                <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>{usCanLabel}</span>
+                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: '#333' }}>{usCanTime}</span>
               </div>
               <div style={{ width: '1px', height: '28px', background: '#e0e0e0', borderRadius: '1px' }} />
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
@@ -691,10 +770,30 @@ export default function App() {
             borderRadius: '8px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
             marginBottom: '30px',
+            position: 'relative',
           }}>
             <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
               Customer Information
             </h2>
+            <button
+              onClick={handleResetCustomerInfo}
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                padding: '6px 16px',
+                background: '#e3f2fd',
+                color: '#1976d2',
+                border: '1.5px solid #90caf9',
+                borderRadius: '6px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '14px',
+                zIndex: 2
+              }}
+            >
+              Reset
+            </button>
             <div className="customer-info-grid">
               <div className="customer-info-field">
                 <label className="customer-info-label">
@@ -803,13 +902,14 @@ export default function App() {
             <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
               Add Product
             </h2>
-            <div style={{ 
-              display: "flex", 
-              flexWrap: "wrap", 
-              gap: "20px",
-              alignItems: "flex-end"
+            <div style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "16px",
+              alignItems: "flex-end",
+              width: '100%',
             }}>
-              <div style={{ flex: "1 1 250px", minWidth: "200px" }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', flex: '2 1 400px', minWidth: 0, gap: 10 }}>
                 <label style={{ 
                   display: "block", 
                   marginBottom: "8px", 
@@ -821,89 +921,117 @@ export default function App() {
                     ⓘ
                   </span>
                 </label>
-                <select
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
-                  style={{ 
-                    padding: "10px", 
-                    width: "100%",
-                    borderRadius: "6px",
-                    border: `1px solid ${styles.inputBorder}`,
-                    backgroundColor: "#fff",
-                    color: styles.textColor,
-                    fontSize: "16px"
-                  }}
-                >
-                  {PRODUCTS.map((p) => (
-                    <option key={p.name} value={p.name}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ 
-                display: "flex", 
-                alignItems: "flex-end", 
-                gap: "15px",
-                flex: "0 0 auto"
-              }}>
-                <div style={{ flex: "0 0 80px" }}>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: "8px", 
-                    fontWeight: "500",
-                    color: styles.textColor 
-                  }}>
-                    Quantity
-                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the number of units for this product">
-                      ⓘ
-                    </span>
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={qty}
-                    onChange={(e) => setQty(Number(e.target.value))}
-                    onWheel={handleQtyWheel}
-                    style={{ 
-                      padding: "10px", 
-                      width: "80px",
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 6 }}>
+                  <select
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value)}
+                    style={{
+                      padding: "10px",
+                      minWidth: "220px",
                       borderRadius: "6px",
                       border: `1px solid ${styles.inputBorder}`,
                       backgroundColor: "#fff",
                       color: styles.textColor,
                       fontSize: "16px",
-                      boxSizing: "border-box"
+                      flex: '1 1 220px',
+                      marginRight: 8
                     }}
-                  />
-                </div>
-                <div style={{ flex: "0 0 80px" }}>
-                  <button 
-                    onClick={addProduct}
-                    style={{ 
-                      padding: "10px",
-                      width: "80px",
-                      backgroundColor: styles.buttonBackground,
-                      color: styles.buttonText,
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "16px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "background-color 0.2s",
-                      marginTop: "32px"
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1565c0"}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = styles.buttonBackground}
                   >
-                    <span style={{ fontSize: "18px" }}>+</span> Add
+                    {allProducts.map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleAddProductClick}
+                    style={{ background: '#e3f2fd', color: '#1976d2', border: '1.5px solid #90caf9', borderRadius: 6, padding: '8px 14px', fontWeight: 600, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' }}
+                  >
+                    + Add New Product
                   </button>
+                  {/* Show remove buttons for custom products */}
+                  {customProducts.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {customProducts.map(p => (
+                        <button
+                          key={p.name}
+                          type="button"
+                          title={`Remove ${p.name}`}
+                          onClick={() => handleRemoveCustomProduct(p.name)}
+                          style={{ background: 'none', border: 'none', color: '#d32f2f', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
+                        >
+                          🗑️
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, flex: '0 0 auto' }}>
+                <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: styles.textColor, whiteSpace: 'nowrap' }}>
+                  Quantity
+                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the number of units for this product">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={qty}
+                  onChange={(e) => setQty(Number(e.target.value))}
+                  onWheel={handleQtyWheel}
+                  style={{
+                    padding: "10px",
+                    width: "80px",
+                    borderRadius: "6px",
+                    border: `1px solid ${styles.inputBorder}`,
+                    backgroundColor: "#fff",
+                    color: styles.textColor,
+                    fontSize: "16px",
+                    boxSizing: "border-box"
+                  }}
+                />
+                <button
+                  onClick={addProduct}
+                  style={{
+                    padding: "10px 18px",
+                    backgroundColor: styles.buttonBackground,
+                    color: styles.buttonText,
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    marginLeft: 4
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1565c0"}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = styles.buttonBackground}
+                >
+                  + Add
+                </button>
+              </div>
             </div>
+            {showAddProductForm && (
+              <form onSubmit={handleAddProductSubmit} style={{ marginTop: 16, background: '#f7f9fc', borderRadius: 8, padding: 16, boxShadow: '0 2px 8px rgba(30,136,229,0.07)', maxWidth: 500 }}>
+                <div style={{ marginBottom: 10 }}>
+                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Product Name</label>
+                  <input type="text" placeholder="Name" value={newProduct.name} onChange={e => handleNewProductChange('name', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
+                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Description</label>
+                  <input type="text" placeholder="Description" value={newProduct.description} onChange={e => handleNewProductChange('description', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
+                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>License</label>
+                  <input type="text" placeholder="License" value={newProduct.license} onChange={e => handleNewProductChange('license', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
+                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Unit Cost</label>
+                  <input type="number" placeholder="Unit Cost" value={newProduct.unitCost} min={0} onChange={e => handleNewProductChange('unitCost', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd', marginBottom: 6 }} />
+                  <label style={{ fontWeight: 500, marginBottom: 2, display: 'block' }}>Margin (%)</label>
+                  <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1.5px solid #bdbdbd' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="submit" style={{ background: '#1976d2', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>Add</button>
+                  <button type="button" onClick={() => setShowAddProductForm(false)} style={{ background: '#fff', color: '#1976d2', border: '1.5px solid #90caf9', borderRadius: 6, padding: '6px 16px', fontWeight: 600, cursor: 'pointer', fontSize: 14 }}>Cancel</button>
+                </div>
+              </form>
+            )}
           </div>
 
           {products.length > 0 && (
@@ -1221,10 +1349,10 @@ export default function App() {
                   </tr>
                   <tr>
                     <td style={{ padding: "10px 0", fontWeight: "bold", color: styles.primaryColor }}>
-                      Customer Total (Before Payment Processing Fee):
+                      Customer Total (After Payment Processing Fee):
                     </td>
                     <td style={{ padding: "10px 0", textAlign: "right", fontWeight: "bold", color: styles.primaryColor }}>
-                      ${ (customerSubtotal + proFeeForCalc + taxOnCustomer).toFixed(2) } CAD
+                      ${ (customerSubtotal + proFeeForCalc + taxOnCustomer + stripeFee).toFixed(2) } CAD
                     </td>
                   </tr>
                   <tr>
@@ -1249,21 +1377,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "40px" }}>
-          {validationError && (
-            <div style={{
-              color: '#fff',
-              background: '#d32f2f',
-              padding: '14px 24px',
-              borderRadius: '8px',
-              marginBottom: '18px',
-              fontWeight: 600,
-              fontSize: '1.1rem',
-              display: 'inline-block',
-              boxShadow: '0 2px 8px rgba(211,47,47,0.12)'
-            }}>
-              {validationError}
-            </div>
-          )}
+          <Notification key={notificationKey} message={notification} onClose={() => setNotification("")} />
           <button
             onClick={generatePDF}
             disabled={isGeneratingPDF}
