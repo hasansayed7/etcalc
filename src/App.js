@@ -5,10 +5,8 @@ import QRCode from 'qrcode';
 import { PRODUCTS } from './data/products';
 import { getPricingData, getPackageName, getRecommendations, generateEmailSubject } from './utils/pricing';
 import ErrorBoundary from './components/ErrorBoundary';
-import logoLightPng from './assets/et_light.png';
 import Login from './components/Login';
 import bgCloud from './assets/bg_cloud.png';
-import logoDarkPng from './assets/et_dark.png';
 import Notification from './components/Notification';
 import { sendEmail } from './utils/emailService';
 import emailjs from '@emailjs/browser';
@@ -315,7 +313,7 @@ export default function App() {
   
       // Add PNG logo at the top left
       const img = new Image();
-      img.src = logoLightPng;
+      img.src = EXCELYTECH_LOGO;
       doc.addImage(img.src, 'PNG', 14, 10, 45, 9);
   
       // Add company details
@@ -596,7 +594,7 @@ export default function App() {
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
           <!-- Header with Logo -->
           <div style="text-align: left; margin-bottom: 20px; padding-bottom: 10px;">
-            <img src="${logoLightPng}" alt="ExcelyTech Logo" style="height: 30px; margin-bottom: 10px;">
+            <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" alt="ExcelyTech Logo" style="height: 30px; margin-bottom: 10px;">
           </div>
   
           <!-- Company Details -->
@@ -734,7 +732,7 @@ export default function App() {
           </div>
 
           <div style="text-align:center; margin-top:40px;">
-            <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" alt="ExcelyTech Logo" class="logo">
+            <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" alt="ExcelyTech Logo" class="logo" style="max-width:200px; height:auto;">
           </div>
         </div>
       `;
@@ -951,8 +949,8 @@ export default function App() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img 
-                src={darkMode ? logoDarkPng : logoLightPng} 
-                alt="ExcelyTech Logo" 
+                src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png"
+                alt="ExcelyTech Logo"
                 style={{ height: '44px', width: 'auto', borderRadius: '4px', background: 'transparent' }}
               />
             </div>

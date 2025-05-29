@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import bgCloud from '../assets/bg_cloud.png';
-import logoLightPng from '../assets/et_light.png';
 
 // SVG icons for better rendering
 const UserIcon = () => (
@@ -187,7 +186,7 @@ export default function Login({ onLogin }) {
     <div style={styles.container}>
       <div style={styles.overlay}></div>
       <form style={styles.card} onSubmit={handleSubmit}>
-        <img src={logoLightPng} alt="ExcelyTech Logo" style={styles.logo} />
+        <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" alt="ExcelyTech Logo" style={styles.logo} />
         {/* Username input with icon */}
         <div
           style={{
