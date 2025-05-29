@@ -279,9 +279,12 @@ export default function App() {
 
   const recommendations = getRecommendations(products, serviceCharge, billingCycle, profitBeforeTax);
 
-  const showNotification = (msg) => {
-    setNotification(msg);
+  const showNotification = (message) => {
+    setNotification(message);
     setNotificationKey(prev => prev + 1);
+    setTimeout(() => {
+      setNotification("");
+    }, 3000);
   };
 
   const validateQuoteGeneration = () => {
@@ -881,6 +884,31 @@ export default function App() {
           >
             <span style={{fontSize: '22px'}}>⎋</span>
           </button>
+
+          {/* Bell icon for notifications */}
+          <button
+            onClick={() => showNotification("No Notifications")}
+            style={{
+              background: styles.buttonBackground,
+              color: styles.buttonText,
+              border: 'none',
+              borderRadius: '50%',
+              padding: '10px',
+              fontSize: '1.3rem',
+              width: '44px',
+              height: '44px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              cursor: 'pointer',
+              transition: 'background 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            title="Notifications"
+          >
+            <span style={{fontSize: '22px'}}>🔔</span>
+          </button>
+
           {/* Dark/Light mode toggle button */}
           <button
             onClick={() => setDarkMode((prev) => !prev)}
