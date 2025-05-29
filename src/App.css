@@ -1,0 +1,216 @@
+:root {
+  --light-bg: #f8f9fa;
+  --light-text: #212529;
+  --light-card: #ffffff;
+  --light-border: #dee2e6;
+  --light-accent: #3a86ff;
+  
+  --dark-bg: #1a1a1a;
+  --dark-text: #f8f9fa;
+  --dark-card: #2d2d2d;
+  --dark-border: #495057;
+  --dark-accent: #64b5f6;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+  background-color: var(--light-bg);
+  color: var(--light-text);
+  transition: all 0.2s ease;
+}
+
+.app.dark {
+  background-color: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  background: var(--light-accent);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+}
+
+.app.dark .theme-toggle {
+  background: var(--dark-accent);
+}
+
+h1, h2, h3 {
+  color: var(--light-accent);
+  margin-bottom: 1rem;
+}
+
+.app.dark h1,
+.app.dark h2,
+.app.dark h3 {
+  color: var(--dark-accent);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.product-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--light-card);
+  border: 1px solid var(--light-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.app.dark .product-card {
+  background-color: var(--dark-card);
+  border-color: var(--dark-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.product-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.product-icon {
+  font-size: 1.5rem;
+}
+
+.price-info {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.quantity-control {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.quantity-control button {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  background-color: var(--light-accent);
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.quantity-control input {
+  flex: 1;
+  text-align: center;
+  border: 1px solid var(--light-border);
+  border-radius: 0.25rem;
+  padding: 0 0.5rem;
+}
+
+.app.dark .quantity-control input {
+  border-color: var(--dark-border);
+  background-color: var(--dark-card);
+  color: var(--dark-text);
+}
+
+.config-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.config-card {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--light-card);
+  border: 1px solid var(--light-border);
+}
+
+.app.dark .config-card {
+  background-color: var(--dark-card);
+  border-color: var(--dark-border);
+}
+
+.config-card label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.config-card input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--light-border);
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.app.dark .config-card input {
+  border-color: var(--dark-border);
+  background-color: var(--dark-card);
+  color: var(--dark-text);
+}
+
+.config-value {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.summary {
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  background-color: var(--light-card);
+  border: 1px solid var(--light-border);
+}
+
+.app.dark .summary {
+  background-color: var(--dark-card);
+  border-color: var(--dark-border);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--light-border);
+}
+
+.app.dark .summary-row {
+  border-bottom-color: var(--dark-border);
+}
+
+.summary-row.total {
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-bottom: none;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--light-accent);
+}
+
+.app.dark .summary-row.total {
+  border-top-color: var(--dark-accent);
+}
