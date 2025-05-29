@@ -253,10 +253,6 @@ export default function App() {
       showNotification("Please add at least one product");
       return false;
     }
-    if (serviceCharge < 0) {
-      showNotification("Service charge cannot be negative");
-      return false;
-    }
     return true;
   };
 
@@ -265,21 +261,21 @@ export default function App() {
       if (!validateQuoteGeneration()) {
         return;
       }
-
+  
       setIsGeneratingPDF(true);
       setValidationError("");
-
+  
       const doc = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4"
       });
-
+  
       // Add PNG logo at the top left
       const img = new Image();
       img.src = logoLightPng;
       doc.addImage(img.src, 'PNG', 14, 10, 45, 9);
-
+  
       // Add company details
       let headerY = 10 + 9 + 12; // logo Y + logo height + extra space
       doc.setFontSize(10);
@@ -293,11 +289,11 @@ export default function App() {
         doc.text(line, 14, headerY);
         headerY += 5;
       });
-
+  
       doc.setDrawColor(200, 200, 200);
       doc.line(14, headerY, 196, headerY);
       headerY += 5;
-
+  
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text(`Quote Date: ${new Date().toLocaleDateString('en-US', { 
@@ -327,7 +323,7 @@ export default function App() {
         doc.text(splitText, 14, currentY);
         currentY += splitText.length * 4.5;
       });
-
+  
       doc.setFontSize(14);
       doc.setTextColor(33, 150, 243);
       const quoteSummary = `Quote Summary: ${getPackageName(products)}`;
@@ -343,7 +339,7 @@ export default function App() {
       const splitBilling = doc.splitTextToSize(billingText, 180);
       doc.text(splitBilling, 14, currentY);
       currentY += splitBilling.length * 4.5;
-
+  
       const tableColumn = ["Product Name", "Description", "Qty", "Price", "Total"];
       const productRows = products.map(p => [
         p.name,
@@ -352,7 +348,7 @@ export default function App() {
         `$${getPricingData(p, p.qty).recommendedPrice.toFixed(2)}`,
         `$${(getPricingData(p, p.qty).recommendedPrice * p.qty * billingMultiplier).toFixed(2)}`
       ]);
-
+  
       const additionalRows = [
         [
           {
@@ -382,7 +378,7 @@ export default function App() {
           `$${stripeFee.toFixed(2)}`
         ]
       ];
-
+  
       const totalRow = [
         {
           content: `TOTAL (${billingCycle === 'monthly' ? 'Monthly' : 'Annual'} Charge)`,
@@ -392,7 +388,7 @@ export default function App() {
         "",
         `$${finalTotal.toFixed(2)}`
       ];
-
+  
       autoTable(doc, {
         startY: currentY + 2,
         head: [tableColumn],
@@ -425,7 +421,7 @@ export default function App() {
           }
         }
       });
-
+  
       currentY = doc.lastAutoTable.finalY + 15;
       doc.setFontSize(10);
       doc.setTextColor(100);
@@ -447,7 +443,7 @@ export default function App() {
         doc.text(splitText, 14, currentY);
         currentY += splitText.length * 4.5;
       });
-
+  
       const pageHeight = doc.internal.pageSize.height;
       let footerY = pageHeight - 15;
       doc.setFontSize(8);
@@ -455,10 +451,10 @@ export default function App() {
       const footerText = "Confidential - This document contains proprietary information and is intended solely for the recipient.";
       const splitFooter = doc.splitTextToSize(footerText, 180);
       doc.text(splitFooter, 14, footerY);
-
+  
       doc.addPage();
       currentY = 20;
-
+  
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text("Key Terms and Conditions:", 14, currentY);
@@ -477,7 +473,7 @@ export default function App() {
         doc.text(splitText, 14, currentY);
         currentY += splitText.length * 4.5;
       });
-
+  
       currentY += 10;
       doc.setTextColor(0);
       doc.setFontSize(10);
@@ -488,7 +484,7 @@ export default function App() {
       currentY += 10;
       doc.text("ExcelyTech Representative: _______________________", 14, currentY);
       doc.text("Date: ________________", 140, currentY);
-
+  
       currentY += 15;
       doc.setTextColor(25, 118, 210);
       const appreciationText = "We appreciate your business!";
@@ -505,12 +501,12 @@ export default function App() {
         doc.text(splitText, 14, currentY);
         currentY += splitText.length * 4.5;
       });
-
+  
       footerY = pageHeight - 15;
       doc.setFontSize(8);
       doc.setTextColor(150);
       doc.text(splitFooter, 14, footerY);
-
+  
       // Generate QR code with summary info
       const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
       const qrDataUrl = await QRCode.toDataURL(qrText, { width: 80, margin: 1 });
@@ -519,9 +515,9 @@ export default function App() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const firstPageHeight = doc.internal.pageSize.getHeight();
       doc.addImage(qrDataUrl, 'PNG', pageWidth - qrSize - 30, firstPageHeight - qrSize - 70, qrSize, qrSize);
-
+  
       doc.save(`ExcelyTech_Quote_${customerName || "Customer"}_${new Date().toISOString().slice(0, 10)}.pdf`);
-
+  
       // After PDF is generated, send email if customer email is provided
       if (customerEmail) {
         try {
@@ -530,7 +526,7 @@ export default function App() {
             subject: `Quote for ${customerName} - ${new Date().toLocaleDateString()}`,
             message: `Dear ${salutation} ${customerName},\n\nThank you for your interest in our products. Please find attached your quote.\n\nBest regards,\nExcellyTech Team`
           };
-
+  
           await sendEmail(emailData);
           showNotification("Quote has been sent to your email!");
         } catch (error) {
@@ -538,7 +534,7 @@ export default function App() {
           showNotification("Quote generated but failed to send email. Please try again later.");
         }
       }
-
+  
       setIsGeneratingPDF(false);
       return true;
     } catch (error) {
@@ -546,6 +542,130 @@ export default function App() {
       setValidationError(`Error generating PDF: ${error.message || "Please try again"}`);
       setIsGeneratingPDF(false);
       return false;
+    }
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      if (!customerEmail) {
+        throw new Error("Please enter customer email first");
+      }
+
+      setIsGeneratingPDF(true);
+      
+      // Generate the email content with the same structure as the PDF
+      const emailContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+          <!-- Header with Logo -->
+          <div style="text-align: left; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+            <img src="${logoLightPng}" alt="ExcelyTech Logo" style="height: 30px; margin-bottom: 10px;">
+          </div>
+
+          <!-- Contact Details -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <p style="margin: 8px 0; text-align: left;">Ontario, Canada</p>
+            <p style="margin: 8px 0; text-align: left;">289-291-6377</p>
+            <p style="margin: 8px 0; text-align: left;">info@excelytech.com</p>
+          </div>
+
+          <!-- Quote Details -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <p style="margin: 8px 0; text-align: left;"><strong>Quote Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p style="margin: 8px 0; text-align: left;"><strong>Quote #:</strong> ${Math.floor(1000 + Math.random() * 9000)}</p>
+            <p style="margin: 8px 0; text-align: left;"><strong>Prepared for:</strong> ${salutation} ${customerName || "Customer"} <strong>**Quote Valid for 30 Days**</strong></p>
+          </div>
+
+          <!-- Greeting -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <p style="margin: 8px 0; text-align: left;">${salutation} ${customerName || "Customer"},</p>
+            <p style="margin: 8px 0; text-align: left;">Thank you for choosing ExcelyTech for your backup and security needs. We are pleased to present this detailed quote for our services, tailored to meet your requirements. Below, you will find a comprehensive breakdown of your proposed solution:</p>
+          </div>
+
+          <!-- Quote Summary -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 18px; text-align: left;">Quote Summary: ${getPackageName(products)}</h2>
+            <p style="margin: 8px 0; text-align: left;">Billing Cycle: ${billingCycle === 'monthly' ? 'Monthly subscription - You will be charged this amount every month' : 'Annual subscription - You will be charged this amount once per year'}</p>
+          </div>
+
+          <!-- Products Table -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; text-align: left;">
+              <thead>
+                <tr style="background-color: #1e88e5; color: white; text-align: left;">
+                  <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Product Name</th>
+                  <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Description</th>
+                  <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Qty</th>
+                  <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Price</th>
+                  <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${products.map(p => `
+                  <tr style="border-bottom: 1px solid #e0e0e0; text-align: left;">
+                    <td style="padding: 8px; text-align: left;">${p.name}</td>
+                    <td style="padding: 8px; text-align: left;">${p.description}</td>
+                    <td style="padding: 8px; text-align: right;">${p.qty}</td>
+                    <td style="padding: 8px; text-align: right;">$${getPricingData(p, p.qty).recommendedPrice.toFixed(2)}</td>
+                    <td style="padding: 8px; text-align: right;">$${(getPricingData(p, p.qty).recommendedPrice * p.qty * billingMultiplier).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+                <tr style="text-align: left;">
+                  <td style="padding: 8px; text-align: left;" colspan="2">Implementation & Support</td>
+                  <td style="padding: 8px; text-align: right;">1</td>
+                  <td style="padding: 8px; text-align: right;">$${proFeeForCalc.toFixed(2)}</td>
+                  <td style="padding: 8px; text-align: right;">$${proFeeForCalc.toFixed(2)}</td>
+                </tr>
+                <tr style="text-align: left;">
+                  <td style="padding: 8px; text-align: left;" colspan="4">Tax (13% HST)</td>
+                  <td style="padding: 8px; text-align: right;">$${taxOnCustomer.toFixed(2)}</td>
+                </tr>
+                <tr style="text-align: left;">
+                  <td style="padding: 8px; text-align: left;" colspan="4">Payment Processing${waiveStripe ? " waived" : ""}</td>
+                  <td style="padding: 8px; text-align: right;">$${stripeFee.toFixed(2)}</td>
+                </tr>
+                <tr style="font-weight: bold; text-align: left;">
+                  <td style="padding: 8px; text-align: left;" colspan="3">TOTAL (${billingCycle === 'monthly' ? 'Monthly' : 'Annual'} Charge)</td>
+                  <td style="padding: 8px; text-align: right;"></td>
+                  <td style="padding: 8px; text-align: right;">$${finalTotal.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Terms & Conditions -->
+          <div style="margin-bottom: 20px; text-align: left;">
+            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 18px; text-align: left;">Terms & Conditions:</h2>
+            <ol style="padding-left: 20px; margin: 0; text-align: left;">
+              <li style="margin-bottom: 8px; text-align: left;">Validity: This quote is valid for 30 days from the date of issue. Prices are subject to change thereafter.</li>
+              <li style="margin-bottom: 8px; text-align: left;">Payment Terms: Invoices are due within 15 days of receipt. ${billingCycle === 'monthly' ? 'Monthly subscriptions will be automatically charged on the 1st of each month.' : 'Annual subscriptions require full payment upfront within 15 days of invoice receipt.'}</li>
+              <li style="margin-bottom: 8px; text-align: left;">Service Commencement: Services will commence upon receipt of signed agreement and initial payment.</li>
+              <li style="margin-bottom: 8px; text-align: left;">Cancellation Policy: Subscriptions may be canceled with 30 days' written notice. No refunds will be issued for partial terms.</li>
+              <li style="margin-bottom: 8px; text-align: left;">Limitation of Liability: ExcelyTech shall not be liable for any indirect, incidental, or consequential damages arising from the use of our services.</li>
+              <li style="margin-bottom: 8px; text-align: left;">Governing Law: This agreement shall be governed by the laws of Ontario, Canada.</li>
+            </ol>
+          </div>
+
+          <!-- Confidential Notice -->
+          <div style="margin-bottom: 20px; font-size: 12px; color: #666; text-align: center;">
+            <p style="margin: 5px 0;">Confidential - This document contains proprietary information and is intended solely for the recipient.</p>
+          </div>
+        </div>
+      `;
+
+      const emailParams = {
+        to_email: customerEmail,
+        from_name: "ExcelyTech Sales Team",
+        subject: `Quote Summary for ${customerName || "Customer"}`,
+        message: emailContent,
+      };
+
+      await sendEmail(emailParams);
+      showNotification("Email sent successfully!");
+      setIsGeneratingPDF(false);
+    } catch (error) {
+      console.error("Email Sending Failed:", error);
+      showNotification(`Failed to send email: ${error.message}`);
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -1409,43 +1529,70 @@ export default function App() {
         </div>
         <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "40px" }}>
           <Notification key={notificationKey} message={notification} onClose={() => setNotification("")} />
-          <button
-            onClick={generatePDF}
-            disabled={isGeneratingPDF}
-            style={{
-              backgroundColor: isGeneratingPDF ? "#90a4ae" : styles.buttonBackground,
-              color: styles.buttonText,
-              border: "none",
-              padding: "16px 48px",
-              fontSize: "20px",
-              fontWeight: "600",
-              cursor: isGeneratingPDF ? "not-allowed" : "pointer",
-              borderRadius: "8px",
-              boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
-              transition: "background-color 0.2s",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "12px"
-            }}
-            onMouseOver={e => {
-              if (!isGeneratingPDF) e.currentTarget.style.backgroundColor = "#1565c0";
-            }}
-            onMouseOut={e => {
-              if (!isGeneratingPDF) e.currentTarget.style.backgroundColor = styles.buttonBackground;
-            }}
-          >
-            {isGeneratingPDF ? (
-              <>
-                <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-                Generating...
-              </>
-            ) : (
-              <>
-                <span style={{ fontSize: "22px" }}>📄</span>
-                Generate Quote PDF
-              </>
-            )}
-          </button>
+          <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
+            <button
+              onClick={generatePDF}
+              disabled={isGeneratingPDF}
+              style={{
+                backgroundColor: isGeneratingPDF ? "#90a4ae" : styles.buttonBackground,
+                color: styles.buttonText,
+                border: "none",
+                padding: "16px 32px",
+                fontSize: "18px",
+                fontWeight: "600",
+                cursor: isGeneratingPDF ? "not-allowed" : "pointer",
+                borderRadius: "8px",
+                boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
+                transition: "background-color 0.2s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "12px"
+              }}
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: "22px" }}>📄</span>
+                  Generate PDF
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleSendEmail}
+              disabled={isGeneratingPDF || !customerEmail}
+              style={{
+                backgroundColor: isGeneratingPDF || !customerEmail ? "#90a4ae" : "#4caf50",
+                color: "#ffffff",
+                border: "none",
+                padding: "16px 32px",
+                fontSize: "18px",
+                fontWeight: "600",
+                cursor: isGeneratingPDF || !customerEmail ? "not-allowed" : "pointer",
+                borderRadius: "8px",
+                boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
+                transition: "background-color 0.2s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "12px"
+              }}
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: "22px" }}>✉️</span>
+                  Send Email
+                </>
+              )}
+            </button>
+          </div>
         </div>
         <style>
           {`
