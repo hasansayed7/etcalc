@@ -10,6 +10,7 @@ import Login from './components/Login';
 import bgCloud from './assets/bg_cloud.png';
 import logoDarkPng from './assets/et_dark.png';
 import Notification from './components/Notification';
+import { sendEmail } from './utils/emailService';
 
 export default function App() {
   // Theme state
@@ -260,11 +261,14 @@ export default function App() {
   };
 
   const generatePDF = async () => {
-    if (!validateQuoteGeneration()) {
-      return;
-    }
-    setIsGeneratingPDF(true);
     try {
+      if (!validateQuoteGeneration()) {
+        return;
+      }
+
+      setIsGeneratingPDF(true);
+      setValidationError("");
+
       const doc = new jsPDF();
       // Add PNG logo at the top left
       const img = new Image();
@@ -511,9 +515,28 @@ export default function App() {
       doc.addImage(qrDataUrl, 'PNG', pageWidth - qrSize - 30, firstPageHeight - qrSize - 70, qrSize, qrSize);
 
       doc.save(`ExcelyTech-Quote-${customerName || "Customer"}-${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).replace(/\//g, '-')}.pdf`);
+
+      // After PDF is generated, send email if customer email is provided
+      if (customerEmail) {
+        try {
+          const emailData = {
+            to_email: customerEmail,
+            subject: `Quote for ${customerName} - ${new Date().toLocaleDateString()}`,
+            message: `Dear ${salutation} ${customerName},\n\nThank you for your interest in our products. Please find attached your quote.\n\nBest regards,\nExcellyTech Team`
+          };
+
+          await sendEmail(emailData);
+          showNotification("Quote has been sent to your email!");
+        } catch (error) {
+          console.error('Error sending email:', error);
+          showNotification("Quote generated but failed to send email. Please try again later.");
+        }
+      }
+
       setIsGeneratingPDF(false);
-    } catch (err) {
-      setValidationError('PDF generation failed: ' + (err.message || err.toString()));
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setValidationError("Error generating PDF. Please try again.");
       setIsGeneratingPDF(false);
     }
   };
