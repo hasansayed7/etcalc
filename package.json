@@ -45,3 +45,10 @@
     ]
   }
 }
+
+{
+  "scripts": {
+    "prebuild": "chmod +x ./node_modules/.bin/react-scripts",
+    "build": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts build"
+  }
+}
