@@ -11,6 +11,7 @@ import bgCloud from './assets/bg_cloud.png';
 import logoDarkPng from './assets/et_dark.png';
 import Notification from './components/Notification';
 import { sendEmail } from './utils/emailService';
+import emailjs from '@emailjs/browser';
 
 export default function App() {
   // Theme state
@@ -514,29 +515,136 @@ export default function App() {
       const firstPageHeight = doc.internal.pageSize.getHeight();
       doc.addImage(qrDataUrl, 'PNG', pageWidth - qrSize - 30, firstPageHeight - qrSize - 70, qrSize, qrSize);
 
-      doc.save(`ExcelyTech-Quote-${customerName || "Customer"}-${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }).replace(/\//g, '-')}.pdf`);
-
-      // After PDF is generated, send email if customer email is provided
-      if (customerEmail) {
-        try {
-          const emailData = {
-            to_email: customerEmail,
-            subject: `Quote for ${customerName} - ${new Date().toLocaleDateString()}`,
-            message: `Dear ${salutation} ${customerName},\n\nThank you for your interest in our products. Please find attached your quote.\n\nBest regards,\nExcellyTech Team`
-          };
-
-          await sendEmail(emailData);
-          showNotification("Quote has been sent to your email!");
-        } catch (error) {
-          console.error('Error sending email:', error);
-          showNotification("Quote generated but failed to send email. Please try again later.");
-        }
-      }
-
+      // Save the PDF
+      doc.save(`ExcelyTech_Quote_${new Date().toISOString().slice(0, 10)}.pdf`);
       setIsGeneratingPDF(false);
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      setValidationError("Error generating PDF. Please try again.");
+      console.error("PDF Generation Failed:", error);
+      setValidationError(`Error: ${error.message || "Check console"}`);
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    try {
+      if (!customerEmail) {
+        throw new Error("Customer email is missing.");
+      }
+
+      setIsGeneratingPDF(true);
+      
+      // Generate the email content with the same structure as the PDF
+      const emailContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+          <!-- Header with Logo -->
+          <div style="text-align: left; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #e0e0e0;">
+            <img src="${logoLightPng}" alt="ExcelyTech Logo" style="height: 30px; margin-bottom: 10px;">
+          </div>
+
+          <!-- Contact Details -->
+          <div style="margin-bottom: 20px;">
+            <p style="margin: 8px 0;">Ontario, Canada</p>
+            <p style="margin: 8px 0;">289-291-6377</p>
+            <p style="margin: 8px 0;">info@excelytech.com</p>
+          </div>
+
+          <!-- Quote Details -->
+          <div style="margin-bottom: 20px;">
+            <p style="margin: 8px 0;"><strong>Quote Date:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p style="margin: 8px 0;"><strong>Quote #:</strong> ${Math.floor(1000 + Math.random() * 9000)}</p>
+            <p style="margin: 8px 0;"><strong>Prepared for:</strong> ${salutation} ${customerName || "Customer"} <strong>**Quote Valid for 30 Days**</strong></p>
+          </div>
+
+          <!-- Greeting -->
+          <div style="margin-bottom: 20px;">
+            <p style="margin: 8px 0;">${salutation} ${customerName || "Customer"},</p>
+            <p style="margin: 8px 0;">Thank you for choosing ExcelyTech for your backup and security needs. We are pleased to present this detailed quote for our services, tailored to meet your requirements. Below, you will find a comprehensive breakdown of your proposed solution:</p>
+          </div>
+
+          <!-- Quote Summary -->
+          <div style="margin-bottom: 20px;">
+            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 18px;">Quote Summary: ${getPackageName(products)}</h2>
+            <p style="margin: 8px 0;">Billing Cycle: ${billingCycle === 'monthly' ? 'Monthly subscription - You will be charged this amount every month' : 'Annual subscription - You will be charged this amount once per year'}</p>
+          </div>
+
+          <!-- Products Table -->
+          <div style="margin-bottom: 20px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+              <thead>
+                <tr style="background-color: #1e88e5; color: white;">
+                  <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Product Name</th>
+                  <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Description</th>
+                  <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Qty</th>
+                  <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Price</th>
+                  <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${products.map(p => `
+                  <tr style="border-bottom: 1px solid #e0e0e0;">
+                    <td style="padding: 8px; text-align: left;">${p.name}</td>
+                    <td style="padding: 8px; text-align: left;">${p.description}</td>
+                    <td style="padding: 8px; text-align: right;">${p.qty}</td>
+                    <td style="padding: 8px; text-align: right;">$${getPricingData(p, p.qty).recommendedPrice.toFixed(2)}</td>
+                    <td style="padding: 8px; text-align: right;">$${(getPricingData(p, p.qty).recommendedPrice * p.qty * billingMultiplier).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+                <tr>
+                  <td style="padding: 8px; text-align: left;" colspan="2">Implementation & Support</td>
+                  <td style="padding: 8px; text-align: right;">1</td>
+                  <td style="padding: 8px; text-align: right;">$${proFeeForCalc.toFixed(2)}</td>
+                  <td style="padding: 8px; text-align: right;">$${proFeeForCalc.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; text-align: left;" colspan="4">Tax (13% HST)</td>
+                  <td style="padding: 8px; text-align: right;">$${taxOnCustomer.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px; text-align: left;" colspan="4">Payment Processing${waiveStripe ? " waived" : ""}</td>
+                  <td style="padding: 8px; text-align: right;">$${stripeFee.toFixed(2)}</td>
+                </tr>
+                <tr style="font-weight: bold;">
+                  <td style="padding: 8px; text-align: left;" colspan="3">TOTAL (${billingCycle === 'monthly' ? 'Monthly' : 'Annual'} Charge)</td>
+                  <td style="padding: 8px; text-align: right;"></td>
+                  <td style="padding: 8px; text-align: right;">$${finalTotal.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Terms & Conditions -->
+          <div style="margin-bottom: 20px;">
+            <h2 style="color: #1e88e5; margin: 0 0 10px; font-size: 18px;">Terms & Conditions:</h2>
+            <ol style="padding-left: 20px; margin: 0;">
+              <li style="margin-bottom: 8px;">Validity: This quote is valid for 30 days from the date of issue. Prices are subject to change thereafter.</li>
+              <li style="margin-bottom: 8px;">Payment Terms: Invoices are due within 15 days of receipt. ${billingCycle === 'monthly' ? 'Monthly subscriptions will be automatically charged on the 1st of each month.' : 'Annual subscriptions require full payment upfront within 15 days of invoice receipt.'}</li>
+              <li style="margin-bottom: 8px;">Service Commencement: Services will commence upon receipt of signed agreement and initial payment.</li>
+              <li style="margin-bottom: 8px;">Cancellation Policy: Subscriptions may be canceled with 30 days' written notice. No refunds will be issued for partial terms.</li>
+              <li style="margin-bottom: 8px;">Limitation of Liability: ExcelyTech shall not be liable for any indirect, incidental, or consequential damages arising from the use of our services.</li>
+              <li style="margin-bottom: 8px;">Governing Law: This agreement shall be governed by the laws of Ontario, Canada.</li>
+            </ol>
+          </div>
+
+          <!-- Confidential Notice -->
+          <div style="margin-bottom: 20px; font-size: 12px; color: #666;">
+            <p style="margin: 5px 0;">Confidential - This document contains proprietary information and is intended solely for the recipient.</p>
+          </div>
+        </div>
+      `;
+
+      const emailParams = {
+        to_email: customerEmail,
+        from_name: "ExcelyTech Sales Team",
+        subject: `Quote Summary for ${customerName || "Customer"}`,
+        message: emailContent,
+      };
+
+      await sendEmail(emailParams);
+      showNotification("Email sent successfully!");
+      setIsGeneratingPDF(false);
+    } catch (error) {
+      console.error("Email Sending Failed:", error);
+      showNotification(`Failed to send email: ${error.message}`);
       setIsGeneratingPDF(false);
     }
   };
@@ -1401,43 +1509,70 @@ export default function App() {
         </div>
         <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "40px" }}>
           <Notification key={notificationKey} message={notification} onClose={() => setNotification("")} />
-          <button
-            onClick={generatePDF}
-            disabled={isGeneratingPDF}
-            style={{
-              backgroundColor: isGeneratingPDF ? "#90a4ae" : styles.buttonBackground,
-              color: styles.buttonText,
-              border: "none",
-              padding: "16px 48px",
-              fontSize: "20px",
-              fontWeight: "600",
-              cursor: isGeneratingPDF ? "not-allowed" : "pointer",
-              borderRadius: "8px",
-              boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
-              transition: "background-color 0.2s",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "12px"
-            }}
-            onMouseOver={e => {
-              if (!isGeneratingPDF) e.currentTarget.style.backgroundColor = "#1565c0";
-            }}
-            onMouseOut={e => {
-              if (!isGeneratingPDF) e.currentTarget.style.backgroundColor = styles.buttonBackground;
-            }}
-          >
-            {isGeneratingPDF ? (
-              <>
-                <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-                Generating...
-              </>
-            ) : (
-              <>
-                <span style={{ fontSize: "22px" }}>📄</span>
-                Generate Quote PDF
-              </>
-            )}
-          </button>
+          <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
+            <button
+              onClick={generatePDF}
+              disabled={isGeneratingPDF}
+              style={{
+                backgroundColor: isGeneratingPDF ? "#90a4ae" : styles.buttonBackground,
+                color: styles.buttonText,
+                border: "none",
+                padding: "16px 32px",
+                fontSize: "18px",
+                fontWeight: "600",
+                cursor: isGeneratingPDF ? "not-allowed" : "pointer",
+                borderRadius: "8px",
+                boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
+                transition: "background-color 0.2s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "12px"
+              }}
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: "22px" }}>📄</span>
+                  Generate PDF
+                </>
+              )}
+            </button>
+            <button
+              onClick={handleSendEmail}
+              disabled={isGeneratingPDF}
+              style={{
+                backgroundColor: isGeneratingPDF ? "#90a4ae" : "#4caf50",
+                color: "#ffffff",
+                border: "none",
+                padding: "16px 32px",
+                fontSize: "18px",
+                fontWeight: "600",
+                cursor: isGeneratingPDF ? "not-allowed" : "pointer",
+                borderRadius: "8px",
+                boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
+                transition: "background-color 0.2s",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "12px"
+              }}
+            >
+              {isGeneratingPDF ? (
+                <>
+                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: "22px" }}>✉️</span>
+                  Send Email
+                </>
+              )}
+            </button>
+          </div>
         </div>
         <style>
           {`
