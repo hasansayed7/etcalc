@@ -11,6 +11,7 @@ import bgCloud from './assets/bg_cloud.png';
 import logoDarkPng from './assets/et_dark.png';
 import Notification from './components/Notification';
 import { sendEmail } from './utils/emailService';
+import emailjs from '@emailjs/browser';
 
 export default function App() {
   // Theme state
