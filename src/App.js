@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from 'qrcode';
 import { PRODUCTS } from './data/products';
-import { getPricingData, getPackageName, getRecommendations, generateEmailSubject } from './utils/pricing';
+import { getPricingData, getPackageName, getRecommendations, generateEmailSubject, calculateProductRow } from './utils/pricing';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './components/Login';
 import bgCloud from './assets/bg_cloud.png';
@@ -11,6 +11,7 @@ import Notification from './components/Notification';
 import { sendEmail } from './utils/emailService';
 import emailjs from '@emailjs/browser';
 import logoPng from './assets/et_dark.png';
+import ProductTable from './components/ProductTable';
 
 // Replace EXCELYTECH_LOGO with base64 string
 const EXCELYTECH_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF0WlUWHRYTUw6Y29tLmFkb2JlLnhtbC4uLg=='; // <-- Replace with your actual base64 string
@@ -33,7 +34,7 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0].name);
   const [qty, setQty] = useState(1);
-  const [serviceCharge, setServiceCharge] = useState(100);
+  const [serviceCharge, setServiceCharge] = useState(0);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [waiveStripe, setWaiveStripe] = useState(false);
   const [customerName, setCustomerName] = useState("");
@@ -52,9 +53,40 @@ export default function App() {
   const [canTime, setCanTime] = useState(new Date());
   const [indTime, setIndTime] = useState(new Date());
   const [usTime, setUsTime] = useState(new Date());
+  // 1. Add card type selector state
+  const [cardType, setCardType] = useState('domestic'); // 'domestic' or 'international'
+
+  // 1. Make margin thresholds configurable
+  const [productMarginThreshold, setProductMarginThreshold] = useState(20); // default 20%
+  const [packageMarginThreshold, setPackageMarginThreshold] = useState(15); // default 15%
 
   // Memoize allProducts
-  const allProducts = useMemo(() => [...PRODUCTS, ...customProducts], [customProducts]);
+  const allProducts = useMemo(() => {
+    const productsList = [...PRODUCTS, ...customProducts]
+      .filter(p => !p.name.toLowerCase().includes("et dr for vms")); // Exclude "ET DR For VMs"
+
+    // Check if DR product exists in the list
+    const hasDRProduct = productsList.some(p => p.name.toLowerCase().includes("disaster recovery") || p.name === "DR");
+    if (!hasDRProduct) {
+      // Add the DR product dynamically
+      const drProduct = {
+        name: "Disaster Recovery",
+        description: "Disaster Recovery Solution",
+        license: "Annual",
+        unitCost: 0, // Default cost (can be updated)
+        margin: 0, // DR products have 0% margin
+        isHomeGrown: true, // Mark as DR product
+        pricingSlabs: [{
+          minQty: 1,
+          maxQty: 9999,
+          unitCost: 0, // Default cost (can be updated)
+          recommendedPrice: 0 // Default price (can be updated)
+        }]
+      };
+      return [...productsList, drProduct];
+    }
+    return productsList;
+  }, [PRODUCTS, customProducts]);
 
   // Calculate billing multiplier
   const billingMultiplier = billingCycle === "annual" ? 12 : 1;
@@ -72,7 +104,7 @@ export default function App() {
 
     const tax = (subtotal + proFeeForCalc) * 0.13;
     const stripeBase = subtotal + proFeeForCalc + tax;
-    const stripeFee = waiveStripe ? 0 : stripeBase * 0.0299 + 0.30;
+    const stripeFee = waiveStripe ? 0 : (stripeBase * 0.029 + 0.30);
     const total = stripeBase + stripeFee;
 
     return {
@@ -252,43 +284,51 @@ export default function App() {
       : styles.backgroundColor;
   }, [darkMode, styles.overlay, styles.backgroundColor]);
 
-  if (!authenticated) {
-    return <Login onLogin={() => {
-      setAuthenticated(true);
-      localStorage.setItem('authenticated', 'true');
-    }} />;
-  }
-
-  const pax8Subtotal = products.reduce((sum, p) => {
+  // Move this block above any early returns (such as if (!authenticated) ...)
+  const productsWithCalc = useMemo(() => products.map(p => {
     const pricingData = getPricingData(p, p.qty);
-    return sum + pricingData.unitCost * p.qty;
-  }, 0);
+    const isDR = p.isHomeGrown;
+    let drPrice = pricingData.recommendedPrice; // Already includes tax for DR products
+    if (isDR && billingCycle === 'monthly') {
+      drPrice = drPrice / 12; // Monthly billing for DR products
+    }
 
-  const pax8Total = pax8Subtotal * 1.13 * billingMultiplier;
-
-  const customerSubtotal = calculations.subtotal;
-
-  const taxOnCustomer = calculations.tax;
-
-  const stripeBase = calculations.subtotal + calculations.stripeFee;
-  const stripeFee = waiveStripe ? 0 : calculations.stripeFee;
-
-  const finalTotal = calculations.total;
-
-  const profitBeforeTax = customerSubtotal - (pax8Subtotal * billingMultiplier) + 
-                         (billingCycle === "monthly" ? proFeeMonthly : serviceCharge);
-  const profitAfterTax = profitBeforeTax * 0.87 - (waiveStripe ? 0 : stripeFee);
-
-  const productsWithCalc = products.map(p => {
-    const pricingData = getPricingData(p, p.qty);
     return {
       ...p,
       unitCost: pricingData.unitCost,
-      recommendedPrice: pricingData.recommendedPrice,
+      recommendedPrice: isDR ? drPrice : pricingData.recommendedPrice,
       margin: pricingData.margin,
-      lineTotal: pricingData.recommendedPrice * p.qty * billingMultiplier * 1.13
+      lineTotal: isDR 
+        ? drPrice // Display same value as Price for DR products
+        : pricingData.recommendedPrice * p.qty * billingMultiplier
     };
-  });
+  }), [products, billingCycle, billingMultiplier]);
+
+  // Cost to Pax8 (manually input or calculated)
+  const pax8Total = productsWithCalc
+    .filter(p => !p.isHomeGrown)
+    .reduce((sum, p) => sum + (p.unitCost * p.qty * 1.13), 0);
+
+  // Customer Amount (Before Tax)
+  const customerSubtotal = products.reduce((sum, p) => {
+    const row = calculateProductRow(p, p.qty, billingCycle);
+    return sum + row.total;
+  }, 0);
+
+  // Tax (13% HST)
+  const taxOnCustomer = isNaN(customerSubtotal) ? 0 : customerSubtotal * 0.13;
+
+  // Payment Processing Fee (only if Customer Total > 0)
+  const customerTotalBeforeFee = customerSubtotal + taxOnCustomer;
+  const stripeFee = customerTotalBeforeFee > 0 ? 0.30 : 0;
+
+  // Final Customer Total
+  const finalCustomerTotal = customerTotalBeforeFee - stripeFee;
+
+  // Profit Calculations
+  const profitBeforeTax = customerTotalBeforeFee - (pax8Total + proFeeForCalc + stripeFee);
+  const profitTaxRate = 0.13; // 13% profit tax if applicable
+  const profitAfterTax = profitBeforeTax * (1 - profitTaxRate);
 
   const recommendations = getRecommendations(products, serviceCharge, billingCycle, profitBeforeTax);
 
@@ -441,7 +481,7 @@ export default function App() {
           styles: { fontStyle: 'bold' }
         },
         "",
-        `$${finalTotal.toFixed(2)}`
+        `$${finalCustomerTotal.toFixed(2)}`
       ];
   
       autoTable(doc, {
@@ -576,7 +616,7 @@ export default function App() {
       doc.text(splitFooter, doc.internal.pageSize.getWidth() / 2, footerY, { align: 'center' });
   
       // Generate QR code with summary info
-      const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
+      const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalCustomerTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
       const qrDataUrl = await QRCode.toDataURL(qrText, { width: 80, margin: 1 });
       // Place QR code just above the footer, smaller size
       const qrSize = 36;
@@ -595,7 +635,7 @@ export default function App() {
       }
   
       doc.save(`ExcelyTech_Quote_${customerName || "Customer"}_${new Date().toISOString().slice(0, 10)}.pdf`);
-  
+        
       setIsGeneratingPDF(false);
       showNotification("PDF Downloaded Successfully!");
       return true;
@@ -624,7 +664,7 @@ export default function App() {
       setValidationError("");
   
       // Generate QR code with summary info
-      const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
+      const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalCustomerTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
       const qrDataUrl = await QRCode.toDataURL(qrText, { width: 80, margin: 1 });
   
       // Generate the email content to match the PDF structure
@@ -673,7 +713,10 @@ export default function App() {
                   <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Product Name</th>
                   <th style="padding: 8px; text-align: left; border-bottom: 2px solid #1565c0;">Description</th>
                   <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Qty</th>
-                  <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Price</th>
+                  <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right" }}>
+                    Price
+                    <span title="For non-DR: Unit Cost + (Unit Cost × Margin %). For DR: Unit Cost + 13% tax." style={{ marginLeft: 4, color: '#888', cursor: 'help', fontSize: 16 }}>ⓘ</span>
+                  </th>
                   <th style="padding: 8px; text-align: right; border-bottom: 2px solid #1565c0;">Total</th>
                 </tr>
               </thead>
@@ -704,7 +747,7 @@ export default function App() {
                 <tr style="font-weight: bold; background-color: #f5f5f5;">
                   <td style="padding: 8px; text-align: left;" colspan="3">TOTAL (${billingCycle === 'monthly' ? 'Monthly' : 'Annual'} Charge)</td>
                   <td style="padding: 8px; text-align: right;"></td>
-                  <td style="padding: 8px; text-align: right;">$${finalTotal.toFixed(2)}</td>
+                  <td style="padding: 8px; text-align: right;">$${finalCustomerTotal.toFixed(2)}</td>
                 </tr>
               </tbody>
             </table>
@@ -767,7 +810,13 @@ export default function App() {
           </div>
 
           <div style="text-align:center; margin-top:40px;">
-            <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" alt="ExcelyTech Logo" class="logo" style="max-width:200px; height:auto;">
+            <table width="200" cellpadding="0" cellspacing="0" border="0" align="center">
+              <tr>
+                <td align="center">
+                  <img src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png" width="200" style="display:block; max-width:200px; height:auto;" alt="ExcelyTech Logo">
+                </td>
+              </tr>
+            </table>
           </div>
         </div>
       `;
@@ -794,18 +843,31 @@ export default function App() {
   // Check if any product margin is below 20%
   const hasLowMargin = products.some(p => {
     const pricingData = getPricingData(p, p.qty);
-    return pricingData.margin < 20;
+    return !p.isHomeGrown && pricingData.margin < productMarginThreshold;
   });
 
-  // Add a handler for resetting customer info fields only
-  const handleResetCustomerInfo = () => {
+  // Add a handler for resetting all fields
+  const handleResetAll = () => {
     setCustomerName("");
     setSalutation("Mr.");
     setCustomerEmail("");
     setCustomerAddress("");
     setCustomerCompany("");
     setCustomerPhone("");
-    showNotification("Done");
+    setSelectedProduct(PRODUCTS[0].name);
+    setQty(1);
+    setServiceCharge(0);
+    setBillingCycle("monthly");
+    setWaiveStripe(false);
+    setProducts([]);
+    setCustomProducts([]);
+    setShowAddProductForm(false);
+    setNewProduct({ name: '', description: '', license: '', unitCost: 0, margin: 35 });
+    setValidationError("");
+    setCardType('domestic');
+    setProductMarginThreshold(20);
+    setPackageMarginThreshold(15);
+    showNotification("All fields have been reset");
   };
 
   const handleAddProductClick = () => {
@@ -828,10 +890,16 @@ export default function App() {
       return;
     }
     // Add a default pricingSlabs array for compatibility
+    const isDR = newProduct.name === 'Disaster Recovery' || newProduct.name === 'DR';
     const productToAdd = {
       ...newProduct,
       qty: 1,
-      pricingSlabs: [{
+      pricingSlabs: [isDR ? {
+        minQty: 1,
+        maxQty: 9999,
+        unitCost: Number(newProduct.unitCost),
+        recommendedPrice: Number(newProduct.unitCost)
+      } : {
         minQty: 1,
         maxQty: 9999,
         unitCost: Number(newProduct.unitCost),
@@ -864,11 +932,32 @@ export default function App() {
     return re.test(phone);
   };
 
+  const updateUnitCost = (name, newUnitCost) => {
+    setProducts(prev =>
+      prev.map(p => {
+        if (p.name === name) {
+          const isDR = p.isHomeGrown;
+          const updatedSlabs = p.pricingSlabs.map(slab => ({
+            ...slab,
+            unitCost: newUnitCost,
+            recommendedPrice: isDR ? newUnitCost * 1.13 : newUnitCost * (1 + (slab.margin || 0) / 100)
+          }));
+          return { ...p, unitCost: newUnitCost, pricingSlabs: updatedSlabs };
+        }
+        return p;
+      })
+    );
+  };
+
+  // Example: get background color for cards/tables based on darkMode
+  const getCardBackground = () => darkMode ? styles.cardBackground : styles.cardBackground;
+  const getTableBackground = () => darkMode ? styles.cardBackground : '#fff';
+
   return (
     <ErrorBoundary>
       <div
         style={{
-          maxWidth: "1200px",
+          maxWidth: "950px",
           margin: "30px auto",
           fontFamily: "'Roboto', sans-serif",
           padding: "0 20px",
@@ -876,94 +965,172 @@ export default function App() {
           color: styles.textColor,
           minHeight: "100vh",
           transition: 'background 0.3s, color 0.3s',
-          marginTop: '70px',
+          marginTop: '40px',
         }}
       >
-        {/* Top-right button group */}
+        {/* Top-right notification and vertical button group */}
         <div
           style={{
             position: 'fixed',
-            top: 20,
-            right: 20,
-            zIndex: 100,
+            top: 16,
+            right: 16,
+            zIndex: 200,
             display: 'flex',
-            gap: '10px',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            gap: '16px',
           }}
         >
-          {/* Logout button (icon only) */}
-          <button
-            onClick={() => {
-              setAuthenticated(false);
-              localStorage.removeItem('authenticated');
-            }}
-            style={{
-              background: styles.removeButtonBackground,
-              color: styles.buttonText,
-              border: 'none',
-              borderRadius: '50%',
-              padding: '10px',
-              fontSize: '1.3rem',
-              width: '44px',
-              height: '44px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              cursor: 'pointer',
-              transition: 'background 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Logout"
-          >
-            <span style={{fontSize: '22px'}}>⎋</span>
-          </button>
-
-          {/* Bell icon for notifications */}
-          <button
-            onClick={() => showNotification("No Notifications")}
-            style={{
-              background: styles.buttonBackground,
-              color: styles.buttonText,
-              border: 'none',
-              borderRadius: '50%',
-              padding: '10px',
-              fontSize: '1.3rem',
-              width: '44px',
-              height: '44px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              cursor: 'pointer',
-              transition: 'background 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title="Notifications"
-          >
-            <span style={{fontSize: '22px'}}>🔔</span>
-          </button>
-
-          {/* Dark/Light mode toggle button */}
-          <button
-            onClick={() => setDarkMode((prev) => !prev)}
-            style={{
-              background: styles.buttonBackground,
-              color: styles.buttonText,
-              border: 'none',
-              borderRadius: '50%',
-              padding: '10px',
-              fontSize: '1.3rem',
-              width: '44px',
-              height: '44px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              cursor: 'pointer',
-              transition: 'background 0.2s',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {darkMode ? '☀️' : '🌙'}
-          </button>
+          {/* Notification */}
+          <Notification key={notificationKey} message={notification} onClose={() => setNotification("")} />
+          {/* Vertical button group */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
+            {/* Notification Bell */}
+            <button
+              onClick={() => showNotification("Notifications are enabled")}
+              className="action-button notification-bell"
+              style={{
+                background: '#e3f2fd',
+                color: '#1976d2',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
+                cursor: 'pointer',
+              }}
+              title="Notifications"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.63 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" fill="#1976d2"/>
+              </svg>
+            </button>
+            {/* Logout Button */}
+            <button
+              onClick={() => {
+                setAuthenticated(false);
+                localStorage.removeItem('authenticated');
+              }}
+              className="action-button logout-button"
+              style={{
+                background: '#ffebee',
+                color: '#d32f2f',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
+                cursor: 'pointer',
+              }}
+              title="Logout"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#d32f2f"/>
+              </svg>
+            </button>
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={() => setDarkMode((prev) => !prev)}
+              className="action-button dark-mode-toggle"
+              style={{
+                background: darkMode ? '#424242' : '#e3f2fd',
+                color: darkMode ? '#fff' : '#1976d2',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(25,118,210,0.15)',
+                cursor: 'pointer',
+              }}
+              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {darkMode ? (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C14.76 17 17 14.76 17 12C17 9.24 14.76 7 12 7ZM2 13H4C4.55 13 5 12.55 5 12C5 11.45 4.55 11 4 11H2C1.45 11 1 11.45 1 12C1 12.55 1.45 13 2 13ZM20 13H22C22.55 13 23 12.55 23 12C23 11.45 22.55 11 22 11H20C19.45 11 19 11.45 19 12C19 12.55 19.45 13 20 13ZM11 2V4C11 4.55 11.45 5 12 5C12.55 5 13 4.55 13 4V2C13 1.45 12.55 1 12 1C11.45 1 11 1.45 11 2ZM11 20V22C11 22.55 11.45 23 12 23C12.55 23 13 22.55 13 22V20C13 19.45 12.55 19 12 19C11.45 19 11 19.45 11 20ZM5.99 4.58C5.6 4.19 4.96 4.19 4.58 4.58C4.19 4.97 4.19 5.61 4.58 5.99L5.64 7.05C6.03 7.44 6.67 7.44 7.05 7.05C7.44 6.66 7.44 6.02 7.05 5.64L5.99 4.58ZM18.36 16.95C17.97 16.56 17.33 16.56 16.95 16.95C16.56 17.34 16.56 17.98 16.95 18.36L18.01 19.42C18.4 19.81 19.04 19.81 19.42 19.42C19.81 19.03 19.81 18.39 19.42 18.01L18.36 16.95ZM19.42 5.99C19.81 5.6 19.81 4.96 19.42 4.58C19.03 4.19 18.39 4.19 18.01 4.58L16.95 5.64C16.56 6.03 16.56 6.67 16.95 7.05C17.34 7.44 17.98 7.44 18.36 7.05L19.42 5.99ZM7.05 18.36C7.44 17.97 7.44 17.33 7.05 16.95C6.66 16.56 6.02 16.56 5.64 16.95L4.58 18.01C4.19 18.4 4.19 19.04 4.58 19.42C4.97 19.81 5.61 19.81 5.99 19.42L7.05 18.36Z" fill={darkMode ? "#fff" : "#1976d2"}/>
+                </svg>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3ZM12 19C8.14 19 5 15.86 5 12C5 8.14 8.14 5 12 5C15.86 5 19 8.14 19 12C19 15.86 15.86 19 12 19Z" fill="#1976d2"/>
+                  <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill="#1976d2"/>
+                </svg>
+              )}
+            </button>
+            {/* PDF Generation */}
+            <button
+              onClick={generatePDF}
+              disabled={isGeneratingPDF}
+              className="action-button pdf-button"
+              style={{
+                background: '#fff5f5',
+                color: '#d32f2f',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
+                cursor: isGeneratingPDF ? 'not-allowed' : 'pointer',
+                opacity: isGeneratingPDF ? 0.6 : 1
+              }}
+              title="Generate PDF"
+              aria-label="Generate PDF"
+            >
+              {isGeneratingPDF ? (
+                <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="#d32f2f"/>
+                </svg>
+              )}
+            </button>
+            {/* Email Generation */}
+            <button
+              onClick={handleSendEmail}
+              disabled={isGeneratingPDF || !customerEmail}
+              className="action-button email-button"
+              style={{
+                background: '#e3f2fd',
+                color: '#1976d2',
+                border: 'none',
+                borderRadius: '50%',
+                width: '44px',
+                height: '44px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
+                cursor: isGeneratingPDF || !customerEmail ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s',
+                opacity: isGeneratingPDF || !customerEmail ? 0.6 : 1
+              }}
+              title="Send Email"
+              aria-label="Send Email"
+            >
+              {isGeneratingPDF ? (
+                <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM19.6 8.25L12.53 12.67C12.21 12.87 11.79 12.87 11.47 12.67L4.4 8.25C4.15 8.09 4 7.82 4 7.53C4 6.86 4.73 6.46 5.3 6.81L12 11L18.7 6.81C19.27 6.46 20 6.86 20 7.53C20 7.82 19.85 8.09 19.6 8.25Z" fill="#1976d2"/>
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
         {/* Global dark mode field styles */}
         {darkMode && (
@@ -974,7 +1141,7 @@ export default function App() {
               border: 1.5px solid #3a4256 !important;
             }
             input::placeholder, textarea::placeholder {
-              color: #7a8ca7 !important;
+              color: #b0b8c9 !important;
               opacity: 1 !important;
             }
             select:disabled, input:disabled, textarea:disabled {
@@ -988,9 +1155,105 @@ export default function App() {
             }
             th, td {
               color: #f5f6fa !important;
+              background: #232a36 !important;
+            }
+            tr {
+              background: #232a36 !important;
             }
             button {
               font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif !important;
+            }
+            /* Soft button tweaks for dark mode */
+            .soft-btn-dark {
+              background: #2d2d3a !important;
+              color: #ff6d6d !important;
+              box-shadow: 0 2px 8px rgba(211,47,47,0.13) !important;
+            }
+            /* Customer Info Card improvements */
+            .customer-info-card {
+              background: #232a36 !important;
+              border-radius: 18px !important;
+              border: 1.5px solid #2a3140 !important;
+              box-shadow: 0 4px 24px rgba(30,136,229,0.10) !important;
+              padding: 36px 32px 32px 32px !important;
+              margin-bottom: 32px !important;
+            }
+            .customer-info-grid {
+              gap: 36px 32px !important;
+              margin-bottom: 18px !important;
+            }
+            .customer-info-field {
+              background: #262b36 !important;
+              border-radius: 16px !important;
+              box-shadow: 0 2px 8px rgba(30,136,229,0.04) !important;
+              padding: 22px 18px 16px 18px !important;
+              min-width: 0;
+            }
+            .customer-info-label {
+              font-weight: 800 !important;
+              color: #64b5f6 !important;
+              font-size: 1.13rem !important;
+              margin-bottom: 10px !important;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+            }
+            .customer-info-tooltip {
+              color: #b0b8c9 !important;
+              font-size: 15px !important;
+              cursor: pointer;
+              margin-left: 4px;
+            }
+            .customer-info-input {
+              background: #232a36 !important;
+              color: #f5f6fa !important;
+              border: 1.5px solid #3a4256 !important;
+              font-size: 1.13rem !important;
+              border-radius: 8px !important;
+              padding: 14px 12px !important;
+              margin-top: 4px !important;
+            }
+            .customer-info-input:focus {
+              border: 1.5px solid #64b5f6 !important;
+              outline: none !important;
+            }
+            .customer-info-reset {
+              background: #e3f2fd !important;
+              color: #1976d2 !important;
+              border: 1.5px solid #90caf9 !important;
+              border-radius: 10px !important;
+              font-weight: 700 !important;
+              font-size: 15px !important;
+              padding: 8px 22px !important;
+              box-shadow: 0 2px 8px rgba(30,136,229,0.07) !important;
+              transition: background 0.2s !important;
+            }
+            .customer-info-reset:hover {
+              background: #bbdefb !important;
+            }
+            /* Top bar/time zone improvements */
+            .topbar-timezone {
+              background: #232a36 !important;
+              border-radius: 16px !important;
+              box-shadow: 0 2px 16px rgba(30,136,229,0.10) !important;
+              padding: 18px 36px 18px 36px !important;
+              display: flex;
+              align-items: center;
+              gap: 32px;
+              margin-bottom: 18px !important;
+            }
+            .timezone-label {
+              color: #64b5f6 !important;
+              font-weight: 700 !important;
+              font-size: 1.08rem !important;
+              letter-spacing: 1px;
+            }
+            .timezone-time {
+              color: #e3f2fd !important;
+              font-size: 1.13rem !important;
+              font-family: monospace !important;
+              margin-top: 2px;
+              text-shadow: 0 0 4px #1976d2;
             }
           `}</style>
         )}
@@ -1010,19 +1273,19 @@ export default function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img 
                 src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png"
-                alt="ExcelyTech Logo"
+                alt="ExcelyTech Logo" 
                 style={{ height: '44px', width: 'auto', borderRadius: '4px', background: 'transparent' }}
               />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
                 <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>{usCanLabel}</span>
-                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: '#333' }}>{usCanTime}</span>
+                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{usCanTime}</span>
               </div>
               <div style={{ width: '1px', height: '28px', background: '#e0e0e0', borderRadius: '1px' }} />
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
                 <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>IND</span>
-                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: '#333' }}>{indTimeString}</span>
+                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{indTimeString}</span>
               </div>
             </div>
           </div>
@@ -1044,7 +1307,7 @@ export default function App() {
                   Final Total
                 </h3>
                 <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.primaryColor }}>
-                  ${finalTotal.toFixed(2)} CAD
+                  ${finalCustomerTotal.toFixed(2)} CAD
                 </p>
                 <p style={{ margin: "5px 0 0", fontSize: "14px", color: "#666" }}>
                   {billingCycle === "annual" ? "per year" : "per month"}
@@ -1084,7 +1347,7 @@ export default function App() {
               Customer Information
             </h2>
             <button
-              onClick={handleResetCustomerInfo}
+              onClick={handleResetAll}
               style={{
                 position: 'absolute',
                 top: 18,
@@ -1255,9 +1518,25 @@ export default function App() {
                   <button
                     type="button"
                     onClick={handleAddProductClick}
-                    style={{ background: '#e3f2fd', color: '#1976d2', border: '1.5px solid #90caf9', borderRadius: 6, padding: '8px 14px', fontWeight: 600, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' }}
+                    style={{
+                      background: '#e3f2fd',
+                      color: '#1976d2',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '40px',
+                      height: '40px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '26px',
+                      boxShadow: '0 2px 8px rgba(30,136,229,0.07)',
+                      cursor: 'pointer',
+                      transition: 'background 0.2s',
+                    }}
+                    title="Add New Product"
+                    aria-label="Add New Product"
                   >
-                    + Add New Product
+                    <span style={{fontWeight: 700, fontSize: '28px', lineHeight: 1}}>+</span>
                   </button>
                   {/* Show remove buttons for custom products */}
                   {customProducts.length > 0 && (
@@ -1368,12 +1647,14 @@ export default function App() {
                       style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
                     <small style={{ color: '#888' }}>Enter the cost per unit.</small>
                   </div>
-                  <div>
-                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Margin (%)</label>
-                    <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)}
-                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                    <small style={{ color: '#888' }}>Recommended: 35% or higher.</small>
-                  </div>
+                  {newProduct.name !== 'Disaster Recovery' && newProduct.name !== 'DR' && (
+                    <div>
+                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Margin (%)</label>
+                      <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)}
+                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                      <small style={{ color: '#888' }}>Recommended: 35% or higher.</small>
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', gap: 18, justifyContent: 'flex-end', marginTop: 12 }}>
                   <button type="submit" style={{
@@ -1411,131 +1692,15 @@ export default function App() {
           </div>
 
           {products.length > 0 && (
-            <div style={{ 
-              backgroundColor: styles.cardBackground,
-              padding: "20px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              marginBottom: "30px",
-              overflowX: "auto"
-            }}>
-              <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
-                Selected Products
-              </h2>
-              <table style={{ 
-                width: "100%", 
-                borderCollapse: "collapse",
-                backgroundColor: "#fff",
-                tableLayout: "fixed"
-              }}>
-                <thead>
-                  <tr style={{ 
-                    backgroundColor: styles.tableHeaderBackground, 
-                    color: styles.tableHeaderText,
-                    textAlign: "left"
-                  }}>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "15%" }}>Product</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "20%" }}>Description</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "10%" }}>License</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center" }}>Qty</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right" }}>Unit Cost</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center" }}>Margin (%)</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right" }}>Price</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right" }}>Total</th>
-                    <th style={{ padding: "15px", fontWeight: "500", width: "9%" }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {productsWithCalc.map((p) => (
-                    <tr 
-                      key={p.name} 
-                      style={{ 
-                        borderBottom: `1px solid ${styles.borderColor}`,
-                        transition: "background-color 0.2s"
-                      }}
-                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = styles.hoverBackground}
-                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#fff"}
-                    >
-                      <td style={{ padding: "15px", color: styles.textColor }}>{p.name}</td>
-                      <td style={{ padding: "15px", color: styles.textColor }}>{p.description}</td>
-                      <td style={{ padding: "15px", color: styles.textColor }}>{p.license}</td>
-                      <td style={{ padding: "15px", textAlign: "center" }}>
-                        <input
-                          type="number"
-                          min={1}
-                          value={p.qty}
-                          onChange={(e) => updateQty(p.name, Number(e.target.value))}
-                          onWheel={handleQtyWheel}
-                          style={{ 
-                            width: "70px",
-                            padding: "8px",
-                            borderRadius: "6px",
-                            border: `1px solid ${styles.inputBorder}`,
-                            backgroundColor: "#fff",
-                            color: styles.textColor,
-                            fontSize: "16px",
-                            textAlign: "center"
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: "15px", textAlign: "right", color: styles.textColor }}>
-                        ${p.unitCost.toFixed(2)}
-                      </td>
-                      <td style={{ padding: "15px", textAlign: "center" }}>
-                        <input
-                          type="number"
-                          value={p.margin}
-                          onChange={(e) => updateMargin(p.name, Number(e.target.value))}
-                          style={{ 
-                            width: "70px",
-                            padding: "8px",
-                            borderRadius: "6px",
-                            border: `1px solid ${styles.inputBorder}`,
-                            backgroundColor: "#fff",
-                            color: styles.textColor,
-                            fontSize: "16px",
-                            textAlign: "center"
-                          }}
-                          min="0"
-                          max="100"
-                          step="1"
-                        />
-                      </td>
-                      <td style={{ padding: "15px", textAlign: "right", color: styles.textColor }}>
-                        ${p.recommendedPrice.toFixed(2)}
-                      </td>
-                      <td style={{ padding: "15px", textAlign: "right", color: styles.textColor }}>
-                        ${p.lineTotal.toFixed(2)}
-                      </td>
-                      <td style={{ padding: "15px" }}>
-                        <button 
-                          onClick={() => removeProduct(p.name)}
-                          style={{
-                            padding: "8px 12px",
-                            backgroundColor: styles.removeButtonBackground,
-                            color: styles.buttonText,
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            fontSize: "16px",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            transition: "background-color 0.2s",
-                            width: "100%",
-                            justifyContent: "center"
-                          }}
-                          onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#d32f2f"}
-                          onMouseOut={(e) => e.currentTarget.style.backgroundColor = styles.removeButtonBackground}
-                        >
-                          <span style={{ fontSize: "18px" }}>-</span> Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ProductTable
+              products={products}
+              billingCycle={billingCycle}
+              styles={styles}
+              updateQty={updateQty}
+              updateUnitCost={updateUnitCost}
+              updateMargin={updateMargin}
+              removeProduct={removeProduct}
+            />
           )}
 
           <div style={{ 
@@ -1646,19 +1811,20 @@ export default function App() {
               <h3 style={{ margin: "18px 0 0 0", fontSize: "18px", color: styles.primaryColor }}>
                 Business Growth Suggestions
               </h3>
-              <ul style={{ paddingLeft: "20px", margin: 0, color: "#555", listStyleType: "none" }}>
+              <ul style={{ paddingLeft: "20px", margin: 0, color: styles.textColor, listStyleType: "none" }}>
                 {recommendations.map((rec, index) => (
                   <li key={index} style={{ 
                     marginBottom: "12px", 
                     fontSize: "15px", 
                     position: "relative",
-                    paddingLeft: "25px"
+                    paddingLeft: "25px",
+                    color: styles.textColor
                   }}>
                     <span style={{
                       position: "absolute",
                       left: 0,
                       top: "3px",
-                      color: styles.secondaryColor,
+                      color: styles.textColor,
                       fontSize: "18px"
                     }}>
                       •
@@ -1681,26 +1847,18 @@ export default function App() {
               <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
                 Financial Summary
               </h2>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
                 <tbody>
                   <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "500", color: styles.textColor }}>
+                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
                       Our Cost to Pax8 (incl. 13% tax):
                     </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
                       ${pax8Total.toFixed(2)} CAD
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "500", color: styles.textColor }}>
-                      Customer Amount (Before Tax):
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${customerSubtotal.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "500", color: styles.textColor }}>
+                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
                       Professional Services & Support:
                     </td>
                     <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
@@ -1708,31 +1866,31 @@ export default function App() {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "500", color: styles.textColor }}>
-                      Tax (13% HST):
+                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
+                      Customer Amount (Before Tax):
                     </td>
                     <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${taxOnCustomer.toFixed(2)} CAD
+                      ${customerSubtotal.toFixed(2)} CAD
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "500", color: styles.textColor }}>
-                      Payment Processing Fee:
+                    <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
+                      Customer Total (Before Fee):
                     </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${stripeFee.toFixed(2)} CAD
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
+                      ${customerTotalBeforeFee.toFixed(2)} CAD
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "bold", color: styles.primaryColor }}>
+                    <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
                       Customer Total (After Payment Processing Fee):
                     </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", fontWeight: "bold", color: styles.primaryColor }}>
-                      ${calculations.stripeBase.toFixed(2)} CAD
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
+                      ${finalCustomerTotal.toFixed(2)} CAD
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "500", color: styles.textColor }}>
+                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
                       Estimated Profit Before Tax:
                     </td>
                     <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
@@ -1740,83 +1898,49 @@ export default function App() {
                     </td>
                   </tr>
                   <tr>
-                    <td style={{ padding: "10px 0", fontWeight: "500", color: styles.textColor }}>
+                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
                       Estimated Profit After Tax:
                     </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", fontWeight: "bold", color: '#2e7d32' }}>
+                    <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 'bold', color: '#2e7d32' }}>
                       ${profitAfterTax.toFixed(2)} CAD
                     </td>
                   </tr>
                 </tbody>
               </table>
+              <h2 style={{ margin: "32px 0 20px 0", fontSize: "20px", color: styles.primaryColor }}>
+                Taxes and Fees
+              </h2>
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
+                      Tax (13% HST):
+                    </td>
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
+                      ${taxOnCustomer.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
+                      Payment Processing Fee:
+                    </td>
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                      ${stripeFee.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              {customerTotalBeforeFee <= 0 && (
+                <p style={{ 
+                  color: '#d32f2f', 
+                  fontSize: '14px', 
+                  marginTop: '10px',
+                  fontStyle: 'italic'
+                }}>
+                  Note: Payment processing fees may still apply even if no revenue is collected.
+                </p>
+              )}
             </div>
-          </div>
-        </div>
-        <div style={{ textAlign: "center", marginTop: "40px", marginBottom: "40px" }}>
-          <Notification key={notificationKey} message={notification} onClose={() => setNotification("")} />
-          <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
-            <button
-              onClick={generatePDF}
-              disabled={isGeneratingPDF}
-              style={{
-                backgroundColor: isGeneratingPDF ? "#90a4ae" : styles.buttonBackground,
-                color: styles.buttonText,
-                border: "none",
-                padding: "16px 32px",
-                fontSize: "18px",
-                fontWeight: "600",
-                cursor: isGeneratingPDF ? "not-allowed" : "pointer",
-                borderRadius: "8px",
-                boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
-                transition: "background-color 0.2s",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "12px"
-              }}
-            >
-              {isGeneratingPDF ? (
-                <>
-                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <span style={{ fontSize: "22px" }}>📄</span>
-                  Generate PDF
-                </>
-              )}
-            </button>
-            <button
-              onClick={handleSendEmail}
-              disabled={isGeneratingPDF || !customerEmail}
-              style={{
-                backgroundColor: isGeneratingPDF || !customerEmail ? "#90a4ae" : "#4caf50",
-                color: "#ffffff",
-                border: "none",
-                padding: "16px 32px",
-                fontSize: "18px",
-                fontWeight: "600",
-                cursor: isGeneratingPDF || !customerEmail ? "not-allowed" : "pointer",
-                borderRadius: "8px",
-                boxShadow: "0 3px 10px rgba(0,0,0,0.2)",
-                transition: "background-color 0.2s",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "12px"
-              }}
-            >
-              {isGeneratingPDF ? (
-                <>
-                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <span style={{ fontSize: "22px" }}>✉️</span>
-                  Send Email
-                </>
-              )}
-            </button>
           </div>
         </div>
         <style>
@@ -1882,6 +2006,52 @@ export default function App() {
             }
           `}
         </style>
+        {/* Place summary card at the end of the page */}
+        {products.length > 0 && (
+          <div style={{
+            backgroundColor: styles.cardBackground,
+            padding: "20px",
+            borderRadius: "8px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            margin: "40px auto 0 auto",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+            gap: "20px",
+            textAlign: "center",
+            maxWidth: "900px"
+          }}>
+            <div>
+              <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
+                Final Total
+              </h3>
+              <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.primaryColor }}>
+                ${finalCustomerTotal.toFixed(2)} CAD
+              </p>
+              <p style={{ margin: "5px 0 0", fontSize: "14px", color: "#666" }}>
+                {billingCycle === "annual" ? "per year" : "per month"}
+              </p>
+            </div>
+            <div>
+              <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
+                Estimated Profit
+              </h3>
+              <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.secondaryColor }}>
+                ${profitAfterTax.toFixed(2)}
+              </p>
+              <p style={{ margin: "5px 0 0", fontSize: "14px", color: "#666" }}>
+                After Tax ({billingCycle === "annual" ? "per year" : "per month"})
+              </p>
+            </div>
+            <div>
+              <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
+                Package
+              </h3>
+              <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.textColor }}>
+                {getPackageName(products)}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </ErrorBoundary>
   );

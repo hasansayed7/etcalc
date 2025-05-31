@@ -112,5 +112,15 @@ export const PRODUCTS = [
     pricingSlabs: [
       { minQty: 1, maxQty: 9999, unitCost: 4.00, recommendedPrice: 5.40, margin: 35 }
     ],
+  },
+  {
+    name: "ET DR For VMs",
+    description: "Disaster Recovery service per VM",
+    license: "Annual",
+    category: "DR",
+    pricingSlabs: [
+      { minQty: 1, maxQty: 9999, unitCost: 200, margin: 0, recommendedPrice: 226 }
+    ],
+    isHomeGrown: true // Custom flag to identify for Pax8 exclusion
   }
 ]; 

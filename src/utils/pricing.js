@@ -1,3 +1,16 @@
+/**
+ * @typedef {Object} Product
+ * @property {string} name
+ * @property {string} description
+ * @property {string} license
+ * @property {string} [category]
+ * @property {Array<{minQty: number, maxQty: number, unitCost: number, margin?: number, recommendedPrice: number}>} pricingSlabs
+ * @property {number} [unitCost]
+ * @property {number} [margin]
+ * @property {boolean} [isHomeGrown]
+ * @property {number} [qty]
+ */
+
 // Constants for financial calculations
 export const FINANCIAL_CONSTANTS = {
   ANNUAL_DISCOUNT_RATE: 0.03,
@@ -268,7 +281,8 @@ export const getPricingData = (product, qty) => {
     if (slab.unitCost < 0) {
       throw new Error(`Invalid unit cost (${slab.unitCost}) for product ${product.name}`);
     }
-    if (slab.margin < FINANCIAL_CONSTANTS.MIN_MARGIN) {
+    // Only enforce margin for non-homegrown products
+    if (!product.isHomeGrown && slab.margin < FINANCIAL_CONSTANTS.MIN_MARGIN) {
       throw new Error(`Margin (${slab.margin}) below minimum threshold for product ${product.name}`);
     }
   });
@@ -277,13 +291,19 @@ export const getPricingData = (product, qty) => {
     slab => qty >= slab.minQty && qty <= slab.maxQty
   ) || product.pricingSlabs[product.pricingSlabs.length - 1];
 
+  // For home-grown products, recommendedPrice = unitCost * 1.13
+  let recommendedPrice = slab.recommendedPrice;
+  if (product.isHomeGrown) {
+    recommendedPrice = slab.unitCost * 1.13;
+  }
+
   // Calculate discounts
   const volumeDiscount = calculateVolumeDiscount(qty);
   const seasonalPricing = getCurrentSeasonalPricing();
   const totalDiscount = Math.min(volumeDiscount + seasonalPricing.discount, 0.30); // Cap total discount at 30%
 
   // Apply discounts to recommended price
-  const discountedPrice = slab.recommendedPrice * (1 - totalDiscount);
+  const discountedPrice = recommendedPrice * (1 - totalDiscount);
 
   return {
     ...slab,
@@ -1109,4 +1129,36 @@ export const getRecommendations = (products, serviceCharge, billingCycle, profit
   }
 
   return recommendations;
-}; 
+};
+
+/**
+ * Calculate all derived fields for a product row (unit cost, margin, price, total, etc.)
+ * @param {Product} product
+ * @param {number} qty
+ * @param {string} billingCycle
+ * @returns {Object}
+ */
+export function calculateProductRow(product, qty, billingCycle) {
+  const isDR = product.isHomeGrown;
+  // Find the correct pricing slab
+  const slab = (product.pricingSlabs || []).find(
+    slab => qty >= slab.minQty && qty <= slab.maxQty
+  ) || (product.pricingSlabs ? product.pricingSlabs[product.pricingSlabs.length - 1] : { unitCost: 0, margin: 0, recommendedPrice: 0 });
+  const unitCost = typeof product.unitCost === 'number' ? product.unitCost : slab.unitCost;
+  const margin = typeof product.margin === 'number' ? product.margin : (slab.margin || 0);
+  // DR: price = unitCost * 1.13, others: unitCost * (1 + margin/100)
+  const price = isDR ? unitCost * 1.13 : unitCost * (1 + margin / 100);
+  // For DR, total is price (not price * qty), for others, total = price * qty * billingMultiplier
+  const billingMultiplier = billingCycle === 'annual' ? 12 : 1;
+  const total = isDR ? price : price * qty * billingMultiplier;
+  return {
+    ...product,
+    qty,
+    unitCost,
+    margin,
+    price,
+    total,
+    isDR,
+    slab
+  };
+} 
