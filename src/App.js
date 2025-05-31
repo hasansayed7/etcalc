@@ -953,6 +953,11 @@ export default function App() {
   const getCardBackground = () => darkMode ? styles.cardBackground : styles.cardBackground;
   const getTableBackground = () => darkMode ? styles.cardBackground : '#fff';
 
+  // Add this conditional rendering at the top of the return statement
+  if (!authenticated) {
+    return <Login onLogin={() => setAuthenticated(true)} />;
+  }
+
   return (
     <ErrorBoundary>
       <div
@@ -971,8 +976,31 @@ export default function App() {
           marginTop: '40px',
         }}
       >
+        {/* Responsive styles for summary sidebar */}
+        <style>{`
+          @media (max-width: 900px) {
+            .summary-sidebar {
+              flex-direction: row !important;
+              position: static !important;
+              min-width: 0 !important;
+              max-width: 100vw !important;
+              width: 100vw !important;
+              margin: 0 0 18px 0 !important;
+              gap: 12px !important;
+              justify-content: center;
+            }
+            .summary-card {
+              min-width: 0 !important;
+              flex: 1 1 0;
+              max-width: 100%;
+              margin: 0 !important;
+              padding: 16px 8px !important;
+              font-size: 15px !important;
+            }
+          }
+        `}</style>
         {/* Left: Summary Cards (always visible) */}
-        <div style={{
+        <div className="summary-sidebar" style={{
           position: 'sticky',
           top: 40,
           alignSelf: 'flex-start',
@@ -984,7 +1012,7 @@ export default function App() {
           zIndex: 10,
           marginRight: '36px',
         }}>
-          <div style={{
+          <div className="summary-card" style={{
             background: styles.cardBackground,
             borderRadius: '10px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
@@ -1000,7 +1028,7 @@ export default function App() {
               {billingCycle === 'annual' ? 'per year' : 'per month'}
             </p>
           </div>
-          <div style={{
+          <div className="summary-card" style={{
             background: styles.cardBackground,
             borderRadius: '10px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
@@ -1016,7 +1044,7 @@ export default function App() {
               After Tax ({billingCycle === 'annual' ? 'per year' : 'per month'})
             </p>
           </div>
-          <div style={{
+          <div className="summary-card" style={{
             background: styles.cardBackground,
             borderRadius: '10px',
             boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
