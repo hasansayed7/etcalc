@@ -846,15 +846,28 @@ export default function App() {
     return !p.isHomeGrown && pricingData.margin < productMarginThreshold;
   });
 
-  // Add a handler for resetting customer info fields only
-  const handleResetCustomerInfo = () => {
+  // Add a handler for resetting all fields
+  const handleResetAll = () => {
     setCustomerName("");
     setSalutation("Mr.");
     setCustomerEmail("");
     setCustomerAddress("");
     setCustomerCompany("");
     setCustomerPhone("");
-    showNotification("Done");
+    setSelectedProduct(PRODUCTS[0].name);
+    setQty(1);
+    setServiceCharge(0);
+    setBillingCycle("monthly");
+    setWaiveStripe(false);
+    setProducts([]); // clears cart
+    setCustomProducts([]); // clears custom products
+    setShowAddProductForm(false);
+    setNewProduct({ name: '', description: '', license: '', unitCost: 0, margin: 35 });
+    setValidationError("");
+    setCardType('domestic');
+    setProductMarginThreshold(20);
+    setPackageMarginThreshold(15);
+    showNotification("All fields have been reset");
   };
 
   const handleAddProductClick = () => {
@@ -975,6 +988,7 @@ export default function App() {
             {/* Notification Bell */}
             <button
               onClick={() => showNotification("Notifications are enabled")}
+              className="action-button notification-bell"
               style={{
                 background: '#e3f2fd',
                 color: '#1976d2',
@@ -988,7 +1002,6 @@ export default function App() {
                 fontSize: '20px',
                 boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
               }}
               title="Notifications"
             >
@@ -1002,6 +1015,7 @@ export default function App() {
                 setAuthenticated(false);
                 localStorage.removeItem('authenticated');
               }}
+              className="action-button logout-button"
               style={{
                 background: '#ffebee',
                 color: '#d32f2f',
@@ -1015,7 +1029,6 @@ export default function App() {
                 fontSize: '20px',
                 boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
               }}
               title="Logout"
             >
@@ -1026,6 +1039,7 @@ export default function App() {
             {/* Dark Mode Toggle */}
             <button
               onClick={() => setDarkMode((prev) => !prev)}
+              className="action-button dark-mode-toggle"
               style={{
                 background: darkMode ? '#424242' : '#e3f2fd',
                 color: darkMode ? '#fff' : '#1976d2',
@@ -1039,7 +1053,6 @@ export default function App() {
                 fontSize: '20px',
                 boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(25,118,210,0.15)',
                 cursor: 'pointer',
-                transition: 'all 0.2s',
               }}
               title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -1058,6 +1071,7 @@ export default function App() {
             <button
               onClick={generatePDF}
               disabled={isGeneratingPDF}
+              className="action-button pdf-button"
               style={{
                 background: '#fff5f5',
                 color: '#d32f2f',
@@ -1071,7 +1085,6 @@ export default function App() {
                 fontSize: '20px',
                 boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
                 cursor: isGeneratingPDF ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
                 opacity: isGeneratingPDF ? 0.6 : 1
               }}
               title="Generate PDF"
@@ -1089,6 +1102,7 @@ export default function App() {
             <button
               onClick={handleSendEmail}
               disabled={isGeneratingPDF || !customerEmail}
+              className="action-button email-button"
               style={{
                 background: '#e3f2fd',
                 color: '#1976d2',
@@ -1333,7 +1347,7 @@ export default function App() {
               Customer Information
             </h2>
             <button
-              onClick={handleResetCustomerInfo}
+              onClick={handleResetAll}
               style={{
                 position: 'absolute',
                 top: 18,
