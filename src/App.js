@@ -130,7 +130,7 @@ export default function App() {
   }, []);
 
   // Remove unused canTimeString since we're using usCanTime
-  const indTimeString = indTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const indTimeString = indTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).toUpperCase();
   const usTimeString = usTime.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   // Always display only one time for US EST / CAN, using US EST time
