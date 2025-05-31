@@ -957,792 +957,864 @@ export default function App() {
     <ErrorBoundary>
       <div
         style={{
-          maxWidth: "950px",
-          margin: "30px auto",
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          maxWidth: '1200px',
+          margin: '30px auto',
           fontFamily: "'Roboto', sans-serif",
-          padding: "0 20px",
+          padding: '0 20px',
           backgroundColor: styles.backgroundColor,
           color: styles.textColor,
-          minHeight: "100vh",
+          minHeight: '100vh',
           transition: 'background 0.3s, color 0.3s',
           marginTop: '40px',
         }}
       >
-        {/* Top-right notification and vertical button group */}
-        <div
-          style={{
-            position: 'fixed',
-            top: 16,
-            right: 16,
-            zIndex: 200,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-            gap: '16px',
-          }}
-        >
-          {/* Notification */}
-          <Notification key={notificationKey} message={notification} onClose={() => setNotification("")} />
-          {/* Vertical button group */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
-            {/* Notification Bell */}
-            <button
-              onClick={() => showNotification("Notifications are enabled")}
-              className="action-button notification-bell"
-              style={{
-                background: '#e3f2fd',
-                color: '#1976d2',
-                border: 'none',
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
-                cursor: 'pointer',
-              }}
-              title="Notifications"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.63 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" fill="#1976d2"/>
-              </svg>
-            </button>
-            {/* Logout Button */}
-            <button
-              onClick={() => {
-                setAuthenticated(false);
-                localStorage.removeItem('authenticated');
-              }}
-              className="action-button logout-button"
-              style={{
-                background: '#ffebee',
-                color: '#d32f2f',
-                border: 'none',
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
-                cursor: 'pointer',
-              }}
-              title="Logout"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#d32f2f"/>
-              </svg>
-            </button>
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={() => setDarkMode((prev) => !prev)}
-              className="action-button dark-mode-toggle"
-              style={{
-                background: darkMode ? '#424242' : '#e3f2fd',
-                color: darkMode ? '#fff' : '#1976d2',
-                border: 'none',
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(25,118,210,0.15)',
-                cursor: 'pointer',
-              }}
-              title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              {darkMode ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C14.76 17 17 14.76 17 12C17 9.24 14.76 7 12 7ZM2 13H4C4.55 13 5 12.55 5 12C5 11.45 4.55 11 4 11H2C1.45 11 1 11.45 1 12C1 12.55 1.45 13 2 13ZM20 13H22C22.55 13 23 12.55 23 12C23 11.45 22.55 11 22 11H20C19.45 11 19 11.45 19 12C19 12.55 19.45 13 20 13ZM11 2V4C11 4.55 11.45 5 12 5C12.55 5 13 4.55 13 4V2C13 1.45 12.55 1 12 1C11.45 1 11 1.45 11 2ZM11 20V22C11 22.55 11.45 23 12 23C12.55 23 13 22.55 13 22V20C13 19.45 12.55 19 12 19C11.45 19 11 19.45 11 20ZM5.99 4.58C5.6 4.19 4.96 4.19 4.58 4.58C4.19 4.97 4.19 5.61 4.58 5.99L5.64 7.05C6.03 7.44 6.67 7.44 7.05 7.05C7.44 6.66 7.44 6.02 7.05 5.64L5.99 4.58ZM18.36 16.95C17.97 16.56 17.33 16.56 16.95 16.95C16.56 17.34 16.56 17.98 16.95 18.36L18.01 19.42C18.4 19.81 19.04 19.81 19.42 19.42C19.81 19.03 19.81 18.39 19.42 18.01L18.36 16.95ZM19.42 5.99C19.81 5.6 19.81 4.96 19.42 4.58C19.03 4.19 18.39 4.19 18.01 4.58L16.95 5.64C16.56 6.03 16.56 6.67 16.95 7.05C17.34 7.44 17.98 7.44 18.36 7.05L19.42 5.99ZM7.05 18.36C7.44 17.97 7.44 17.33 7.05 16.95C6.66 16.56 6.02 16.56 5.64 16.95L4.58 18.01C4.19 18.4 4.19 19.04 4.58 19.42C4.97 19.81 5.61 19.81 5.99 19.42L7.05 18.36Z" fill={darkMode ? "#fff" : "#1976d2"}/>
-                </svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3ZM12 19C8.14 19 5 15.86 5 12C5 8.14 8.14 5 12 5C15.86 5 19 8.14 19 12C19 15.86 15.86 19 12 19Z" fill="#1976d2"/>
-                  <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill="#1976d2"/>
-                </svg>
-              )}
-            </button>
-            {/* PDF Generation */}
-            <button
-              onClick={generatePDF}
-              disabled={isGeneratingPDF}
-              className="action-button pdf-button"
-              style={{
-                background: '#fff5f5',
-                color: '#d32f2f',
-                border: 'none',
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
-                cursor: isGeneratingPDF ? 'not-allowed' : 'pointer',
-                opacity: isGeneratingPDF ? 0.6 : 1
-              }}
-              title="Generate PDF"
-              aria-label="Generate PDF"
-            >
-              {isGeneratingPDF ? (
-                <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="#d32f2f"/>
-                </svg>
-              )}
-            </button>
-            {/* Email Generation */}
-            <button
-              onClick={handleSendEmail}
-              disabled={isGeneratingPDF || !customerEmail}
-              className="action-button email-button"
-              style={{
-                background: '#e3f2fd',
-                color: '#1976d2',
-                border: 'none',
-                borderRadius: '50%',
-                width: '44px',
-                height: '44px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '20px',
-                boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
-                cursor: isGeneratingPDF || !customerEmail ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s',
-                opacity: isGeneratingPDF || !customerEmail ? 0.6 : 1
-              }}
-              title="Send Email"
-              aria-label="Send Email"
-            >
-              {isGeneratingPDF ? (
-                <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM19.6 8.25L12.53 12.67C12.21 12.87 11.79 12.87 11.47 12.67L4.4 8.25C4.15 8.09 4 7.82 4 7.53C4 6.86 4.73 6.46 5.3 6.81L12 11L18.7 6.81C19.27 6.46 20 6.86 20 7.53C20 7.82 19.85 8.09 19.6 8.25Z" fill="#1976d2"/>
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-        {/* Global dark mode field styles */}
-        {darkMode && (
-          <style>{`
-            input, select, textarea {
-              background: #232a36 !important;
-              color: #f5f6fa !important;
-              border: 1.5px solid #3a4256 !important;
-            }
-            input::placeholder, textarea::placeholder {
-              color: #b0b8c9 !important;
-              opacity: 1 !important;
-            }
-            select:disabled, input:disabled, textarea:disabled {
-              background: #232a36 !important;
-              color: #888 !important;
-            }
-            .card, .panel, .table, .summary {
-              background: #232a36 !important;
-              color: #f5f6fa !important;
-              border: 1.5px solid #2a3140 !important;
-            }
-            th, td {
-              color: #f5f6fa !important;
-              background: #232a36 !important;
-            }
-            tr {
-              background: #232a36 !important;
-            }
-            button {
-              font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif !important;
-            }
-            /* Soft button tweaks for dark mode */
-            .soft-btn-dark {
-              background: #2d2d3a !important;
-              color: #ff6d6d !important;
-              box-shadow: 0 2px 8px rgba(211,47,47,0.13) !important;
-            }
-            /* Customer Info Card improvements */
-            .customer-info-card {
-              background: #232a36 !important;
-              border-radius: 18px !important;
-              border: 1.5px solid #2a3140 !important;
-              box-shadow: 0 4px 24px rgba(30,136,229,0.10) !important;
-              padding: 36px 32px 32px 32px !important;
-              margin-bottom: 32px !important;
-            }
-            .customer-info-grid {
-              gap: 36px 32px !important;
-              margin-bottom: 18px !important;
-            }
-            .customer-info-field {
-              background: #262b36 !important;
-              border-radius: 16px !important;
-              box-shadow: 0 2px 8px rgba(30,136,229,0.04) !important;
-              padding: 22px 18px 16px 18px !important;
-              min-width: 0;
-            }
-            .customer-info-label {
-              font-weight: 800 !important;
-              color: #64b5f6 !important;
-              font-size: 1.13rem !important;
-              margin-bottom: 10px !important;
-              display: flex;
-              align-items: center;
-              gap: 8px;
-            }
-            .customer-info-tooltip {
-              color: #b0b8c9 !important;
-              font-size: 15px !important;
-              cursor: pointer;
-              margin-left: 4px;
-            }
-            .customer-info-input {
-              background: #232a36 !important;
-              color: #f5f6fa !important;
-              border: 1.5px solid #3a4256 !important;
-              font-size: 1.13rem !important;
-              border-radius: 8px !important;
-              padding: 14px 12px !important;
-              margin-top: 4px !important;
-            }
-            .customer-info-input:focus {
-              border: 1.5px solid #64b5f6 !important;
-              outline: none !important;
-            }
-            .customer-info-reset {
-              background: #e3f2fd !important;
-              color: #1976d2 !important;
-              border: 1.5px solid #90caf9 !important;
-              border-radius: 10px !important;
-              font-weight: 700 !important;
-              font-size: 15px !important;
-              padding: 8px 22px !important;
-              box-shadow: 0 2px 8px rgba(30,136,229,0.07) !important;
-              transition: background 0.2s !important;
-            }
-            .customer-info-reset:hover {
-              background: #bbdefb !important;
-            }
-            /* Top bar/time zone improvements */
-            .topbar-timezone {
-              background: #232a36 !important;
-              border-radius: 16px !important;
-              box-shadow: 0 2px 16px rgba(30,136,229,0.10) !important;
-              padding: 18px 36px 18px 36px !important;
-              display: flex;
-              align-items: center;
-              gap: 32px;
-              margin-bottom: 18px !important;
-            }
-            .timezone-label {
-              color: #64b5f6 !important;
-              font-weight: 700 !important;
-              font-size: 1.08rem !important;
-              letter-spacing: 1px;
-            }
-            .timezone-time {
-              color: #e3f2fd !important;
-              font-size: 1.13rem !important;
-              font-family: monospace !important;
-              margin-top: 2px;
-              text-shadow: 0 0 4px #1976d2;
-            }
-          `}</style>
-        )}
+        {/* Left: Summary Cards (always visible) */}
         <div style={{
-          position: 'relative',
+          position: 'sticky',
+          top: 40,
+          alignSelf: 'flex-start',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px',
+          minWidth: '220px',
+          maxWidth: '240px',
+          zIndex: 10,
+          marginRight: '36px',
         }}>
           <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '30px',
-            padding: '15px',
-            backgroundColor: styles.cardBackground,
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            background: styles.cardBackground,
+            borderRadius: '10px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+            padding: '22px 18px',
+            border: `1.5px solid ${styles.borderColor}`,
+            textAlign: 'left',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img 
-                src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png"
-                alt="ExcelyTech Logo" 
-                style={{ height: '44px', width: 'auto', borderRadius: '4px', background: 'transparent' }}
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
-                <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>{usCanLabel}</span>
-                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{usCanTime}</span>
-              </div>
-              <div style={{ width: '1px', height: '28px', background: '#e0e0e0', borderRadius: '1px' }} />
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
-                <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>IND</span>
-                <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{indTimeString}</span>
-              </div>
+            <h3 style={{ margin: '0 0 8px', color: styles.textColor, fontSize: '17px', fontWeight: 700 }}>Final Total</h3>
+            <p style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: styles.primaryColor }}>
+              ${products.length > 0 ? finalCustomerTotal.toFixed(2) : '0.00'} CAD
+            </p>
+            <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#666' }}>
+              {billingCycle === 'annual' ? 'per year' : 'per month'}
+            </p>
+          </div>
+          <div style={{
+            background: styles.cardBackground,
+            borderRadius: '10px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+            padding: '22px 18px',
+            border: `1.5px solid ${styles.borderColor}`,
+            textAlign: 'left',
+          }}>
+            <h3 style={{ margin: '0 0 8px', color: styles.textColor, fontSize: '17px', fontWeight: 700 }}>Estimated Profit</h3>
+            <p style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: styles.secondaryColor }}>
+              ${products.length > 0 ? profitAfterTax.toFixed(2) : '0.00'}
+            </p>
+            <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#666' }}>
+              After Tax ({billingCycle === 'annual' ? 'per year' : 'per month'})
+            </p>
+          </div>
+          <div style={{
+            background: styles.cardBackground,
+            borderRadius: '10px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+            padding: '22px 18px',
+            border: `1.5px solid ${styles.borderColor}`,
+            textAlign: 'left',
+          }}>
+            <h3 style={{ margin: '0 0 8px', color: styles.textColor, fontSize: '17px', fontWeight: 700 }}>Package</h3>
+            <p style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: styles.textColor }}>
+              {products.length > 0 ? getPackageName(products) : 'N/A'}
+            </p>
+          </div>
+        </div>
+        {/* Right: Main Content */}
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 80 }}>
+          {/* Top-right notification and vertical button group */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 16,
+              right: 16,
+              zIndex: 200,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              gap: '16px',
+            }}
+          >
+            {/* Notification */}
+            <Notification key={notificationKey} message={notification} onClose={() => setNotification("")} />
+            {/* Vertical button group */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
+              {/* Notification Bell */}
+              <button
+                onClick={() => showNotification("Notifications are enabled")}
+                className="action-button notification-bell"
+                style={{
+                  background: '#e3f2fd',
+                  color: '#1976d2',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
+                  cursor: 'pointer',
+                }}
+                title="Notifications"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.36 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.63 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16Z" fill="#1976d2"/>
+                </svg>
+              </button>
+              {/* Logout Button */}
+              <button
+                onClick={() => {
+                  setAuthenticated(false);
+                  localStorage.removeItem('authenticated');
+                }}
+                className="action-button logout-button"
+                style={{
+                  background: '#ffebee',
+                  color: '#d32f2f',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
+                  cursor: 'pointer',
+                }}
+                title="Logout"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#d32f2f"/>
+                </svg>
+              </button>
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={() => setDarkMode((prev) => !prev)}
+                className="action-button dark-mode-toggle"
+                style={{
+                  background: darkMode ? '#424242' : '#e3f2fd',
+                  color: darkMode ? '#fff' : '#1976d2',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(25,118,210,0.15)',
+                  cursor: 'pointer',
+                }}
+                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {darkMode ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 7C9.24 7 7 9.24 7 12C7 14.76 9.24 17 12 17C14.76 17 17 14.76 17 12C17 9.24 14.76 7 12 7ZM2 13H4C4.55 13 5 12.55 5 12C5 11.45 4.55 11 4 11H2C1.45 11 1 11.45 1 12C1 12.55 1.45 13 2 13ZM20 13H22C22.55 13 23 12.55 23 12C23 11.45 22.55 11 22 11H20C19.45 11 19 11.45 19 12C19 12.55 19.45 13 20 13ZM11 2V4C11 4.55 11.45 5 12 5C12.55 5 13 4.55 13 4V2C13 1.45 12.55 1 12 1C11.45 1 11 1.45 11 2ZM11 20V22C11 22.55 11.45 23 12 23C12.55 23 13 22.55 13 22V20C13 19.45 12.55 19 12 19C11.45 19 11 19.45 11 20ZM5.99 4.58C5.6 4.19 4.96 4.19 4.58 4.58C4.19 4.97 4.19 5.61 4.58 5.99L5.64 7.05C6.03 7.44 6.67 7.44 7.05 7.05C7.44 6.66 7.44 6.02 7.05 5.64L5.99 4.58ZM18.36 16.95C17.97 16.56 17.33 16.56 16.95 16.95C16.56 17.34 16.56 17.98 16.95 18.36L18.01 19.42C18.4 19.81 19.04 19.81 19.42 19.42C19.81 19.03 19.81 18.39 19.42 18.01L18.36 16.95ZM19.42 5.99C19.81 5.6 19.81 4.96 19.42 4.58C19.03 4.19 18.39 4.19 18.01 4.58L16.95 5.64C16.56 6.03 16.56 6.67 16.95 7.05C17.34 7.44 17.98 7.44 18.36 7.05L19.42 5.99ZM7.05 18.36C7.44 17.97 7.44 17.33 7.05 16.95C6.66 16.56 6.02 16.56 5.64 16.95L4.58 18.01C4.19 18.4 4.19 19.04 4.58 19.42C4.97 19.81 5.61 19.81 5.99 19.42L7.05 18.36Z" fill={darkMode ? "#fff" : "#1976d2"}/>
+                  </svg>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3ZM12 19C8.14 19 5 15.86 5 12C5 8.14 8.14 5 12 5C15.86 5 19 8.14 19 12C19 15.86 15.86 19 12 19Z" fill="#1976d2"/>
+                    <path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" fill="#1976d2"/>
+                  </svg>
+                )}
+              </button>
+              {/* PDF Generation */}
+              <button
+                onClick={generatePDF}
+                disabled={isGeneratingPDF}
+                className="action-button pdf-button"
+                style={{
+                  background: '#fff5f5',
+                  color: '#d32f2f',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
+                  cursor: isGeneratingPDF ? 'not-allowed' : 'pointer',
+                  opacity: isGeneratingPDF ? 0.6 : 1
+                }}
+                title="Generate PDF"
+                aria-label="Generate PDF"
+              >
+                {isGeneratingPDF ? (
+                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="#d32f2f"/>
+                  </svg>
+                )}
+              </button>
+              {/* Email Generation */}
+              <button
+                onClick={handleSendEmail}
+                disabled={isGeneratingPDF || !customerEmail}
+                className="action-button email-button"
+                style={{
+                  background: '#e3f2fd',
+                  color: '#1976d2',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '44px',
+                  height: '44px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
+                  cursor: isGeneratingPDF || !customerEmail ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s',
+                  opacity: isGeneratingPDF || !customerEmail ? 0.6 : 1
+                }}
+                title="Send Email"
+                aria-label="Send Email"
+              >
+                {isGeneratingPDF ? (
+                  <span style={{ display: "inline-block", animation: "spin 1s linear infinite" }}>⟳</span>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM19.6 8.25L12.53 12.67C12.21 12.87 11.79 12.87 11.47 12.67L4.4 8.25C4.15 8.09 4 7.82 4 7.53C4 6.86 4.73 6.46 5.3 6.81L12 11L18.7 6.81C19.27 6.46 20 6.86 20 7.53C20 7.82 19.85 8.09 19.6 8.25Z" fill="#1976d2"/>
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
-
-          {products.length > 0 && (
+          {/* Global dark mode field styles */}
+          {darkMode && (
+            <style>{`
+              input, select, textarea {
+                background: #232a36 !important;
+                color: #f5f6fa !important;
+                border: 1.5px solid #3a4256 !important;
+              }
+              input::placeholder, textarea::placeholder {
+                color: #b0b8c9 !important;
+                opacity: 1 !important;
+              }
+              select:disabled, input:disabled, textarea:disabled {
+                background: #232a36 !important;
+                color: #888 !important;
+              }
+              .card, .panel, .table, .summary {
+                background: #232a36 !important;
+                color: #f5f6fa !important;
+                border: 1.5px solid #2a3140 !important;
+              }
+              th, td {
+                color: #f5f6fa !important;
+                background: #232a36 !important;
+              }
+              tr {
+                background: #232a36 !important;
+              }
+              button {
+                font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif !important;
+              }
+              /* Soft button tweaks for dark mode */
+              .soft-btn-dark {
+                background: #2d2d3a !important;
+                color: #ff6d6d !important;
+                box-shadow: 0 2px 8px rgba(211,47,47,0.13) !important;
+              }
+              /* Customer Info Card improvements */
+              .customer-info-card {
+                background: #232a36 !important;
+                border-radius: 18px !important;
+                border: 1.5px solid #2a3140 !important;
+                box-shadow: 0 4px 24px rgba(30,136,229,0.10) !important;
+                padding: 36px 32px 32px 32px !important;
+                margin-bottom: 32px !important;
+              }
+              .customer-info-grid {
+                gap: 36px 32px !important;
+                margin-bottom: 18px !important;
+              }
+              .customer-info-field {
+                background: #262b36 !important;
+                border-radius: 16px !important;
+                box-shadow: 0 2px 8px rgba(30,136,229,0.04) !important;
+                padding: 22px 18px 16px 18px !important;
+                min-width: 0;
+              }
+              .customer-info-label {
+                font-weight: 800 !important;
+                color: #64b5f6 !important;
+                font-size: 1.13rem !important;
+                margin-bottom: 10px !important;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              }
+              .customer-info-tooltip {
+                color: #b0b8c9 !important;
+                font-size: 15px !important;
+                cursor: pointer;
+                margin-left: 4px;
+              }
+              .customer-info-input {
+                background: #232a36 !important;
+                color: #f5f6fa !important;
+                border: 1.5px solid #3a4256 !important;
+                font-size: 1.13rem !important;
+                border-radius: 8px !important;
+                padding: 14px 12px !important;
+                margin-top: 4px !important;
+              }
+              .customer-info-input:focus {
+                border: 1.5px solid #64b5f6 !important;
+                outline: none !important;
+              }
+              .customer-info-reset {
+                background: #e3f2fd !important;
+                color: #1976d2 !important;
+                border: 1.5px solid #90caf9 !important;
+                border-radius: 10px !important;
+                font-weight: 700 !important;
+                font-size: 15px !important;
+                padding: 8px 22px !important;
+                box-shadow: 0 2px 8px rgba(30,136,229,0.07) !important;
+                transition: background 0.2s !important;
+              }
+              .customer-info-reset:hover {
+                background: #bbdefb !important;
+              }
+              /* Top bar/time zone improvements */
+              .topbar-timezone {
+                background: #232a36 !important;
+                border-radius: 16px !important;
+                box-shadow: 0 2px 16px rgba(30,136,229,0.10) !important;
+                padding: 18px 36px 18px 36px !important;
+                display: flex;
+                align-items: center;
+                gap: 32px;
+                margin-bottom: 18px !important;
+              }
+              .timezone-label {
+                color: #64b5f6 !important;
+                font-weight: 700 !important;
+                font-size: 1.08rem !important;
+                letter-spacing: 1px;
+              }
+              .timezone-time {
+                color: #e3f2fd !important;
+                font-size: 1.13rem !important;
+                font-family: monospace !important;
+                margin-top: 2px;
+                text-shadow: 0 0 4px #1976d2;
+              }
+            `}</style>
+          )}
+          <div style={{
+            position: 'relative',
+          }}>
             <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '30px',
+              padding: '15px',
+              backgroundColor: styles.cardBackground,
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <img 
+                  src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png"
+                  alt="ExcelyTech Logo" 
+                  style={{ height: '44px', width: 'auto', borderRadius: '4px', background: 'transparent' }}
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>{usCanLabel}</span>
+                  <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{usCanTime}</span>
+                </div>
+                <div style={{ width: '1px', height: '28px', background: '#e0e0e0', borderRadius: '1px' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
+                  <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>IND</span>
+                  <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{indTimeString}</span>
+                </div>
+              </div>
+            </div>
+
+            
+
+            <div style={{
+              backgroundColor: styles.cardBackground,
+              padding: '20px',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              marginBottom: '30px',
+              position: 'relative',
+            }}>
+              <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
+                Customer Information
+              </h2>
+              <button
+                onClick={handleResetAll}
+                style={{
+                  position: 'absolute',
+                  top: 18,
+                  right: 18,
+                  padding: '6px 16px',
+                  background: '#e3f2fd',
+                  color: '#1976d2',
+                  border: '1.5px solid #90caf9',
+                  borderRadius: '6px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  zIndex: 2
+                }}
+              >
+                Reset
+              </button>
+              <div className="customer-info-grid">
+                <div className="customer-info-field">
+                  <label className="customer-info-label">
+                    Salutation
+                    <span className="customer-info-tooltip" title="Select the appropriate salutation for the customer">
+                      ⓘ
+                    </span>
+                  </label>
+                  <select
+                    value={salutation}
+                    onChange={(e) => setSalutation(e.target.value)}
+                    className="customer-info-input"
+                  >
+                    <option>Mr.</option>
+                    <option>Ms.</option>
+                    <option>Mrs.</option>
+                    <option>Miss</option>
+                    <option>Dr.</option>
+                    <option>Dear</option>
+                  </select>
+                </div>
+                <div className="customer-info-field">
+                  <label className="customer-info-label">
+                    Customer Name
+                    <span className="customer-info-tooltip" title="Enter the full name of the customer">
+                      ⓘ
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={customerName}
+                    onChange={handleCustomerNameChange}
+                    className="customer-info-input"
+                    placeholder="Enter customer name"
+                  />
+                  {validationError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{validationError}</span>}
+                </div>
+                <div className="customer-info-field">
+                  <label className="customer-info-label">
+                    Company
+                    <span className="customer-info-tooltip" title="Enter the customer's company name">
+                      ⓘ
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={customerCompany}
+                    onChange={(e) => setCustomerCompany(e.target.value)}
+                    className="customer-info-input"
+                    placeholder="Enter company name"
+                  />
+                </div>
+                <div className="customer-info-field">
+                  <label className="customer-info-label">
+                    Email
+                    <span className="customer-info-tooltip" title="Enter the customer's email address">
+                      ⓘ
+                    </span>
+                  </label>
+                  <input
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => handleEmailChange(e)}
+                    className="customer-info-input"
+                    placeholder="Enter customer email"
+                  />
+                </div>
+                <div className="customer-info-field">
+                  <label className="customer-info-label">
+                    Phone
+                    <span className="customer-info-tooltip" title="Enter the customer's phone number">
+                      ⓘ
+                    </span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => handlePhoneChange(e)}
+                    className="customer-info-input"
+                    placeholder="Enter customer phone"
+                  />
+                </div>
+                <div className="customer-info-field">
+                  <label className="customer-info-label">
+                    Address
+                    <span className="customer-info-tooltip" title="Enter the customer's address">
+                      ⓘ
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    className="customer-info-input"
+                    placeholder="Enter customer address"
+                  />
+                </div>
+              </div>
+            </div>
+            <div style={{ 
               backgroundColor: styles.cardBackground,
               padding: "20px",
               borderRadius: "8px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               marginBottom: "30px",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "20px",
-              textAlign: "center"
             }}>
-              <div>
-                <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
-                  Final Total
-                </h3>
-                <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.primaryColor }}>
-                  ${finalCustomerTotal.toFixed(2)} CAD
-                </p>
-                <p style={{ margin: "5px 0 0", fontSize: "14px", color: "#666" }}>
-                  {billingCycle === "annual" ? "per year" : "per month"}
-                </p>
-              </div>
-              <div>
-                <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
-                  Estimated Profit
-                </h3>
-                <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.secondaryColor }}>
-                  ${profitAfterTax.toFixed(2)}
-                </p>
-                <p style={{ margin: "5px 0 0", fontSize: "14px", color: "#666" }}>
-                  After Tax ({billingCycle === "annual" ? "per year" : "per month"})
-                </p>
-              </div>
-              <div>
-                <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
-                  Package
-                </h3>
-                <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.textColor }}>
-                  {getPackageName(products)}
-                </p>
-              </div>
-            </div>
-          )}
-
-          <div style={{
-            backgroundColor: styles.cardBackground,
-            padding: '20px',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            marginBottom: '30px',
-            position: 'relative',
-          }}>
-            <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
-              Customer Information
-            </h2>
-            <button
-              onClick={handleResetAll}
-              style={{
-                position: 'absolute',
-                top: 18,
-                right: 18,
-                padding: '6px 16px',
-                background: '#e3f2fd',
-                color: '#1976d2',
-                border: '1.5px solid #90caf9',
-                borderRadius: '6px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                fontSize: '14px',
-                zIndex: 2
-              }}
-            >
-              Reset
-            </button>
-            <div className="customer-info-grid">
-              <div className="customer-info-field">
-                <label className="customer-info-label">
-                  Salutation
-                  <span className="customer-info-tooltip" title="Select the appropriate salutation for the customer">
-                    ⓘ
-                  </span>
-                </label>
-                <select
-                  value={salutation}
-                  onChange={(e) => setSalutation(e.target.value)}
-                  className="customer-info-input"
-                >
-                  <option>Mr.</option>
-                  <option>Ms.</option>
-                  <option>Mrs.</option>
-                  <option>Miss</option>
-                  <option>Dr.</option>
-                  <option>Dear</option>
-                </select>
-              </div>
-              <div className="customer-info-field">
-                <label className="customer-info-label">
-                  Customer Name
-                  <span className="customer-info-tooltip" title="Enter the full name of the customer">
-                    ⓘ
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={handleCustomerNameChange}
-                  className="customer-info-input"
-                  placeholder="Enter customer name"
-                />
-                {validationError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{validationError}</span>}
-              </div>
-              <div className="customer-info-field">
-                <label className="customer-info-label">
-                  Company
-                  <span className="customer-info-tooltip" title="Enter the customer's company name">
-                    ⓘ
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={customerCompany}
-                  onChange={(e) => setCustomerCompany(e.target.value)}
-                  className="customer-info-input"
-                  placeholder="Enter company name"
-                />
-              </div>
-              <div className="customer-info-field">
-                <label className="customer-info-label">
-                  Email
-                  <span className="customer-info-tooltip" title="Enter the customer's email address">
-                    ⓘ
-                  </span>
-                </label>
-                <input
-                  type="email"
-                  value={customerEmail}
-                  onChange={(e) => handleEmailChange(e)}
-                  className="customer-info-input"
-                  placeholder="Enter customer email"
-                />
-              </div>
-              <div className="customer-info-field">
-                <label className="customer-info-label">
-                  Phone
-                  <span className="customer-info-tooltip" title="Enter the customer's phone number">
-                    ⓘ
-                  </span>
-                </label>
-                <input
-                  type="tel"
-                  value={customerPhone}
-                  onChange={(e) => handlePhoneChange(e)}
-                  className="customer-info-input"
-                  placeholder="Enter customer phone"
-                />
-              </div>
-              <div className="customer-info-field">
-                <label className="customer-info-label">
-                  Address
-                  <span className="customer-info-tooltip" title="Enter the customer's address">
-                    ⓘ
-                  </span>
-                </label>
-                <input
-                  type="text"
-                  value={customerAddress}
-                  onChange={(e) => setCustomerAddress(e.target.value)}
-                  className="customer-info-input"
-                  placeholder="Enter customer address"
-                />
-              </div>
-            </div>
-          </div>
-          <div style={{ 
-            backgroundColor: styles.cardBackground,
-            padding: "20px",
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            marginBottom: "30px",
-          }}>
-            <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
-              Add Product
-            </h2>
-            <div style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "16px",
-              alignItems: "flex-end",
-              width: '100%',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-end', flex: '2 1 400px', minWidth: 0, gap: 10 }}>
-                <label style={{ 
-                  display: "block", 
-                  marginBottom: "8px", 
-                  fontWeight: "500",
-                  color: styles.textColor 
-                }}>
-                  Product
-                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Select a product to add to the quote">
-                    ⓘ
-                  </span>
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 6 }}>
-                  <select
-                    value={selectedProduct}
-                    onChange={(e) => setSelectedProduct(e.target.value)}
+              <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
+                Add Product
+              </h2>
+              <div style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "16px",
+                alignItems: "flex-end",
+                width: '100%',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-end', flex: '2 1 400px', minWidth: 0, gap: 10 }}>
+                  <label style={{ 
+                    display: "block", 
+                    marginBottom: "8px", 
+                    fontWeight: "500",
+                    color: styles.textColor 
+                  }}>
+                    Product
+                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Select a product to add to the quote">
+                      ⓘ
+                    </span>
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 6 }}>
+                    <select
+                      value={selectedProduct}
+                      onChange={(e) => setSelectedProduct(e.target.value)}
+                      style={{
+                        padding: "10px",
+                        minWidth: "220px",
+                        borderRadius: "6px",
+                        border: `1px solid ${styles.inputBorder}`,
+                        backgroundColor: "#fff",
+                        color: styles.textColor,
+                        fontSize: "16px",
+                        flex: '1 1 220px',
+                        marginRight: 8
+                      }}
+                    >
+                      {allProducts.map((p) => (
+                        <option key={p.name} value={p.name}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={handleAddProductClick}
+                      style={{
+                        background: '#e3f2fd',
+                        color: '#1976d2',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '26px',
+                        boxShadow: '0 2px 8px rgba(30,136,229,0.07)',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s',
+                      }}
+                      title="Add New Product"
+                      aria-label="Add New Product"
+                    >
+                      <span style={{fontWeight: 700, fontSize: '28px', lineHeight: 1}}>+</span>
+                    </button>
+                    {/* Show remove buttons for custom products */}
+                    {customProducts.length > 0 && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        {customProducts.map(p => (
+                          <button
+                            key={p.name}
+                            type="button"
+                            title={`Remove ${p.name}`}
+                            onClick={() => handleRemoveCustomProduct(p.name)}
+                            style={{ background: 'none', border: 'none', color: '#d32f2f', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
+                          >
+                            🗑️
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, flex: '0 0 auto' }}>
+                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: styles.textColor, whiteSpace: 'nowrap' }}>
+                    Quantity
+                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the number of units for this product">
+                      ⓘ
+                    </span>
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={qty}
+                    onChange={(e) => setQty(Number(e.target.value))}
+                    onWheel={handleQtyWheel}
                     style={{
                       padding: "10px",
-                      minWidth: "220px",
+                      width: "80px",
                       borderRadius: "6px",
                       border: `1px solid ${styles.inputBorder}`,
                       backgroundColor: "#fff",
                       color: styles.textColor,
                       fontSize: "16px",
-                      flex: '1 1 220px',
-                      marginRight: 8
+                      boxSizing: "border-box"
                     }}
-                  >
-                    {allProducts.map((p) => (
-                      <option key={p.name} value={p.name}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                  />
                   <button
-                    type="button"
-                    onClick={handleAddProductClick}
+                    onClick={addProduct}
                     style={{
-                      background: '#e3f2fd',
-                      color: '#1976d2',
+                      padding: "10px 18px",
+                      backgroundColor: styles.buttonBackground,
+                      color: styles.buttonText,
+                      border: "none",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      fontWeight: 600,
+                      marginLeft: 4
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1565c0"}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = styles.buttonBackground}
+                  >
+                    + Add
+                  </button>
+                </div>
+              </div>
+              {showAddProductForm && (
+                <form onSubmit={handleAddProductSubmit} style={{
+                  background: 'rgba(255,255,255,0.98)',
+                  borderRadius: 20,
+                  boxShadow: '0 8px 32px rgba(30,136,229,0.10)',
+                  padding: 36,
+                  maxWidth: 640,
+                  margin: '0 auto',
+                  marginTop: 32,
+                  marginBottom: 32,
+                  border: '1.5px solid #e3e8ee',
+                  transition: 'box-shadow 0.2s'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
+                    <span style={{ fontSize: 32, color: '#1976d2', marginRight: 14 }}>🛒</span>
+                    <h2 style={{ margin: 0, fontWeight: 800, fontSize: 26, color: '#1976d2', letterSpacing: 1 }}>Add New Product</h2>
+                  </div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 24,
+                    marginBottom: 28
+                  }}>
+                    <div>
+                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Product Name</label>
+                      <input type="text" placeholder="Name" value={newProduct.name} onChange={e => handleNewProductChange('name', e.target.value)}
+                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                      <small style={{ color: '#888' }}>Enter a unique product name.</small>
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Description</label>
+                      <input type="text" placeholder="Description" value={newProduct.description} onChange={e => handleNewProductChange('description', e.target.value)}
+                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                      <small style={{ color: '#888' }}>Briefly describe the product.</small>
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>License</label>
+                      <input type="text" placeholder="License" value={newProduct.license} onChange={e => handleNewProductChange('license', e.target.value)}
+                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                      <small style={{ color: '#888' }}>E.g., Annual, Perpetual, etc.</small>
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Unit Cost</label>
+                      <input type="number" placeholder="Unit Cost" value={newProduct.unitCost} min={0} onChange={e => handleNewProductChange('unitCost', e.target.value)}
+                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                      <small style={{ color: '#888' }}>Enter the cost per unit.</small>
+                    </div>
+                    {newProduct.name !== 'Disaster Recovery' && newProduct.name !== 'DR' && (
+                      <div>
+                        <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Margin (%)</label>
+                        <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)}
+                          style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                        <small style={{ color: '#888' }}>Recommended: 35% or higher.</small>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: 18, justifyContent: 'flex-end', marginTop: 12 }}>
+                    <button type="submit" style={{
+                      background: 'linear-gradient(90deg, #1976d2 60%, #64b5f6 100%)',
+                      color: '#fff',
                       border: 'none',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
+                      borderRadius: 10,
+                      padding: '12px 36px',
+                      fontWeight: 800,
+                      fontSize: 18,
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(25,118,210,0.10)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '26px',
-                      boxShadow: '0 2px 8px rgba(30,136,229,0.07)',
-                      cursor: 'pointer',
-                      transition: 'background 0.2s',
-                    }}
-                    title="Add New Product"
-                    aria-label="Add New Product"
-                  >
-                    <span style={{fontWeight: 700, fontSize: '28px', lineHeight: 1}}>+</span>
-                  </button>
-                  {/* Show remove buttons for custom products */}
-                  {customProducts.length > 0 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      {customProducts.map(p => (
-                        <button
-                          key={p.name}
-                          type="button"
-                          title={`Remove ${p.name}`}
-                          onClick={() => handleRemoveCustomProduct(p.name)}
-                          style={{ background: 'none', border: 'none', color: '#d32f2f', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
-                        >
-                          🗑️
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, flex: '0 0 auto' }}>
-                <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: styles.textColor, whiteSpace: 'nowrap' }}>
-                  Quantity
-                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the number of units for this product">
-                    ⓘ
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  value={qty}
-                  onChange={(e) => setQty(Number(e.target.value))}
-                  onWheel={handleQtyWheel}
-                  style={{
-                    padding: "10px",
-                    width: "80px",
-                    borderRadius: "6px",
-                    border: `1px solid ${styles.inputBorder}`,
-                    backgroundColor: "#fff",
-                    color: styles.textColor,
-                    fontSize: "16px",
-                    boxSizing: "border-box"
-                  }}
-                />
-                <button
-                  onClick={addProduct}
-                  style={{
-                    padding: "10px 18px",
-                    backgroundColor: styles.buttonBackground,
-                    color: styles.buttonText,
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    fontWeight: 600,
-                    marginLeft: 4
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1565c0"}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = styles.buttonBackground}
-                >
-                  + Add
-                </button>
-              </div>
+                      gap: 8,
+                      transition: 'background 0.2s'
+                    }}>
+                      <span style={{ fontSize: 20 }}>➕</span> Add
+                    </button>
+                    <button type="button" onClick={() => setShowAddProductForm(false)} style={{
+                      background: '#fff',
+                      color: '#1976d2',
+                      border: '1.5px solid #90caf9',
+                      borderRadius: 10,
+                      padding: '12px 36px',
+                      fontWeight: 800,
+                      fontSize: 18,
+                      cursor: 'pointer'
+                    }}>
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
-            {showAddProductForm && (
-              <form onSubmit={handleAddProductSubmit} style={{
-                background: 'rgba(255,255,255,0.98)',
-                borderRadius: 20,
-                boxShadow: '0 8px 32px rgba(30,136,229,0.10)',
-                padding: 36,
-                maxWidth: 640,
-                margin: '0 auto',
-                marginTop: 32,
-                marginBottom: 32,
-                border: '1.5px solid #e3e8ee',
-                transition: 'box-shadow 0.2s'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
-                  <span style={{ fontSize: 32, color: '#1976d2', marginRight: 14 }}>🛒</span>
-                  <h2 style={{ margin: 0, fontWeight: 800, fontSize: 26, color: '#1976d2', letterSpacing: 1 }}>Add New Product</h2>
-                </div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 24,
-                  marginBottom: 28
-                }}>
-                  <div>
-                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Product Name</label>
-                    <input type="text" placeholder="Name" value={newProduct.name} onChange={e => handleNewProductChange('name', e.target.value)}
-                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                    <small style={{ color: '#888' }}>Enter a unique product name.</small>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Description</label>
-                    <input type="text" placeholder="Description" value={newProduct.description} onChange={e => handleNewProductChange('description', e.target.value)}
-                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                    <small style={{ color: '#888' }}>Briefly describe the product.</small>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>License</label>
-                    <input type="text" placeholder="License" value={newProduct.license} onChange={e => handleNewProductChange('license', e.target.value)}
-                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                    <small style={{ color: '#888' }}>E.g., Annual, Perpetual, etc.</small>
-                  </div>
-                  <div>
-                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Unit Cost</label>
-                    <input type="number" placeholder="Unit Cost" value={newProduct.unitCost} min={0} onChange={e => handleNewProductChange('unitCost', e.target.value)}
-                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                    <small style={{ color: '#888' }}>Enter the cost per unit.</small>
-                  </div>
-                  {newProduct.name !== 'Disaster Recovery' && newProduct.name !== 'DR' && (
-                    <div>
-                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Margin (%)</label>
-                      <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)}
-                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                      <small style={{ color: '#888' }}>Recommended: 35% or higher.</small>
-                    </div>
-                  )}
-                </div>
-                <div style={{ display: 'flex', gap: 18, justifyContent: 'flex-end', marginTop: 12 }}>
-                  <button type="submit" style={{
-                    background: 'linear-gradient(90deg, #1976d2 60%, #64b5f6 100%)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 10,
-                    padding: '12px 36px',
-                    fontWeight: 800,
-                    fontSize: 18,
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(25,118,210,0.10)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    transition: 'background 0.2s'
-                  }}>
-                    <span style={{ fontSize: 20 }}>➕</span> Add
-                  </button>
-                  <button type="button" onClick={() => setShowAddProductForm(false)} style={{
-                    background: '#fff',
-                    color: '#1976d2',
-                    border: '1.5px solid #90caf9',
-                    borderRadius: 10,
-                    padding: '12px 36px',
-                    fontWeight: 800,
-                    fontSize: 18,
-                    cursor: 'pointer'
-                  }}>
-                    Cancel
-                  </button>
-                </div>
-              </form>
+
+            {products.length > 0 && (
+              <ProductTable
+                products={products}
+                billingCycle={billingCycle}
+                styles={styles}
+                updateQty={updateQty}
+                updateUnitCost={updateUnitCost}
+                updateMargin={updateMargin}
+                removeProduct={removeProduct}
+              />
             )}
-          </div>
 
-          {products.length > 0 && (
-            <ProductTable
-              products={products}
-              billingCycle={billingCycle}
-              styles={styles}
-              updateQty={updateQty}
-              updateUnitCost={updateUnitCost}
-              updateMargin={updateMargin}
-              removeProduct={removeProduct}
-            />
-          )}
-
-          <div style={{ 
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "30px",
-            marginBottom: 0,
-            alignItems: "stretch"
-          }}>
             <div style={{ 
-              backgroundColor: styles.cardBackground,
-              padding: "32px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              display: "flex",
-              flexDirection: "column",
-              gap: "22px",
-              minHeight: '480px'
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "30px",
+              marginBottom: 0,
+              alignItems: "stretch"
             }}>
-              <h2 style={{ margin: "0 0 10px", fontSize: "20px", color: styles.primaryColor }}>
-                Price Configuration
-              </h2>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <label style={{ 
-                  fontWeight: "500",
-                  color: styles.textColor,
-                  marginBottom: "4px"
-                }}>
-                  Professional Services & Support
-                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the one-time fee for implementation and support">
-                    ⓘ
-                  </span>
-                </label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '100%', flexWrap: 'wrap' }}>
-                  <input
-                    type="number"
-                    min={0}
-                    value={serviceCharge}
-                    onChange={(e) => setServiceCharge(Number(e.target.value))}
+              <div style={{ 
+                backgroundColor: styles.cardBackground,
+                padding: "32px",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "22px",
+                minHeight: '480px'
+              }}>
+                <h2 style={{ margin: "0 0 10px", fontSize: "20px", color: styles.primaryColor }}>
+                  Price Configuration
+                </h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <label style={{ 
+                    fontWeight: "500",
+                    color: styles.textColor,
+                    marginBottom: "4px"
+                  }}>
+                    Professional Services & Support
+                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the one-time fee for implementation and support">
+                      ⓘ
+                    </span>
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '100%', flexWrap: 'wrap' }}>
+                    <input
+                      type="number"
+                      min={0}
+                      value={serviceCharge}
+                      onChange={(e) => setServiceCharge(Number(e.target.value))}
+                      style={{ 
+                        padding: "12px 14px", 
+                        width: "120px",
+                        borderRadius: "8px",
+                        border: `1.5px solid ${styles.inputBorder}`,
+                        backgroundColor: darkMode ? "#232a36" : "#f8fafc",
+                        color: styles.textColor,
+                        fontSize: "16px",
+                        boxSizing: "border-box",
+                        marginBottom: "2px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+                      }}
+                    />
+                    <span style={{ color: '#555', fontWeight: 500, fontSize: '15px' }}>CAD</span>
+                    <span style={{
+                      background: '#e3f2fd',
+                      color: '#1976d2',
+                      borderRadius: '6px',
+                      padding: '10px 14px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      marginLeft: '10px',
+                      border: '1px solid #bbdefb',
+                      maxWidth: '320px',
+                      wordBreak: 'break-word',
+                      whiteSpace: 'normal',
+                      flex: '1 1 220px',
+                      minWidth: '120px',
+                      boxSizing: 'border-box',
+                      display: 'inline-block',
+                      textAlign: 'center',
+                      marginTop: '6px'
+                    }}>
+                      Enter the total amount for implementation and support for the entire year.
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <label style={{ 
+                    fontWeight: "500",
+                    color: styles.textColor,
+                    marginBottom: "4px"
+                  }}>
+                    Billing Cycle
+                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Choose between monthly or annual billing">
+                      ⓘ
+                    </span>
+                  </label>
+                  <select
+                    value={billingCycle}
+                    onChange={(e) => setBillingCycle(e.target.value)}
                     style={{ 
                       padding: "12px 14px", 
-                      width: "120px",
+                      width: "100%",
                       borderRadius: "8px",
                       border: `1.5px solid ${styles.inputBorder}`,
                       backgroundColor: darkMode ? "#232a36" : "#f8fafc",
@@ -1752,306 +1824,210 @@ export default function App() {
                       marginBottom: "2px",
                       boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
                     }}
-                  />
-                  <span style={{ color: '#555', fontWeight: 500, fontSize: '15px' }}>CAD</span>
-                  <span style={{
-                    background: '#e3f2fd',
-                    color: '#1976d2',
-                    borderRadius: '6px',
-                    padding: '10px 14px',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    marginLeft: '10px',
-                    border: '1px solid #bbdefb',
-                    maxWidth: '320px',
-                    wordBreak: 'break-word',
-                    whiteSpace: 'normal',
-                    flex: '1 1 220px',
-                    minWidth: '120px',
-                    boxSizing: 'border-box',
-                    display: 'inline-block',
-                    textAlign: 'center',
-                    marginTop: '6px'
-                  }}>
-                    Enter the total amount for implementation and support for the entire year.
-                  </span>
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="annual">Annual</option>
+                  </select>
                 </div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <label style={{ 
-                  fontWeight: "500",
-                  color: styles.textColor,
-                  marginBottom: "4px"
-                }}>
-                  Billing Cycle
-                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Choose between monthly or annual billing">
-                    ⓘ
-                  </span>
-                </label>
-                <select
-                  value={billingCycle}
-                  onChange={(e) => setBillingCycle(e.target.value)}
-                  style={{ 
-                    padding: "12px 14px", 
-                    width: "100%",
-                    borderRadius: "8px",
-                    border: `1.5px solid ${styles.inputBorder}`,
-                    backgroundColor: darkMode ? "#232a36" : "#f8fafc",
-                    color: styles.textColor,
-                    fontSize: "16px",
-                    boxSizing: "border-box",
-                    marginBottom: "2px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
-                  }}
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="annual">Annual</option>
-                </select>
-              </div>
-              <h3 style={{ margin: "18px 0 0 0", fontSize: "18px", color: styles.primaryColor }}>
-                Business Growth Suggestions
-              </h3>
-              <ul style={{ paddingLeft: "20px", margin: 0, color: styles.textColor, listStyleType: "none" }}>
-                {recommendations.map((rec, index) => (
-                  <li key={index} style={{ 
-                    marginBottom: "12px", 
-                    fontSize: "15px", 
-                    position: "relative",
-                    paddingLeft: "25px",
-                    color: styles.textColor
-                  }}>
-                    <span style={{
-                      position: "absolute",
-                      left: 0,
-                      top: "3px",
-                      color: styles.textColor,
-                      fontSize: "18px"
+                <h3 style={{ margin: "18px 0 0 0", fontSize: "18px", color: styles.primaryColor }}>
+                  Business Growth Suggestions
+                </h3>
+                <ul style={{ paddingLeft: "20px", margin: 0, color: styles.textColor, listStyleType: "none" }}>
+                  {recommendations.map((rec, index) => (
+                    <li key={index} style={{ 
+                      marginBottom: "12px", 
+                      fontSize: "15px", 
+                      position: "relative",
+                      paddingLeft: "25px",
+                      color: styles.textColor
                     }}>
-                      •
-                    </span>
-                    {rec}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                      <span style={{
+                        position: "absolute",
+                        left: 0,
+                        top: "3px",
+                        color: styles.textColor,
+                        fontSize: "18px"
+                      }}>
+                        •
+                      </span>
+                      {rec}
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-            <div style={{ 
-              backgroundColor: hasLowMargin ? '#ffeaea' : styles.cardBackground,
-              border: hasLowMargin ? '2px solid #d32f2f' : undefined,
-              color: hasLowMargin ? '#d32f2f' : styles.textColor,
-              padding: "20px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              minHeight: '480px'
-            }}>
-              <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
-                Financial Summary
-              </h2>
-              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
-                      Our Cost to Pax8 (incl. 13% tax):
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
-                      ${pax8Total.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Professional Services & Support:
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${proFeeForCalc.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Customer Amount (Before Tax):
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${customerSubtotal.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
-                      Customer Total (Before Fee):
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
-                      ${customerTotalBeforeFee.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
-                      Customer Total (After Payment Processing Fee):
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
-                      ${finalCustomerTotal.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Estimated Profit Before Tax:
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${profitBeforeTax.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Estimated Profit After Tax:
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 'bold', color: '#2e7d32' }}>
-                      ${profitAfterTax.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <h2 style={{ margin: "32px 0 20px 0", fontSize: "20px", color: styles.primaryColor }}>
-                Taxes and Fees
-              </h2>
-              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
-                <tbody>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
-                      Tax (13% HST):
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
-                      ${taxOnCustomer.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Payment Processing Fee:
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${stripeFee.toFixed(2)} CAD
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              {customerTotalBeforeFee <= 0 && (
-                <p style={{ 
-                  color: '#d32f2f', 
-                  fontSize: '14px', 
-                  marginTop: '10px',
-                  fontStyle: 'italic'
-                }}>
-                  Note: Payment processing fees may still apply even if no revenue is collected.
-                </p>
-              )}
+              <div style={{ 
+                backgroundColor: hasLowMargin ? '#ffeaea' : styles.cardBackground,
+                border: hasLowMargin ? '2px solid #d32f2f' : undefined,
+                color: hasLowMargin ? '#d32f2f' : styles.textColor,
+                padding: "20px",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                minHeight: '480px'
+              }}>
+                <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
+                  Financial Summary
+                </h2>
+                <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
+                        Our Cost to Pax8 (incl. 13% tax):
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
+                        ${pax8Total.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
+                        Professional Services & Support:
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                        ${proFeeForCalc.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
+                        Customer Amount (Before Tax):
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                        ${customerSubtotal.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
+                        Customer Total (Before Fee):
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
+                        ${customerTotalBeforeFee.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
+                        Customer Total (After Payment Processing Fee):
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
+                        ${finalCustomerTotal.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
+                        Estimated Profit Before Tax:
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                        ${profitBeforeTax.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
+                        Estimated Profit After Tax:
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 'bold', color: '#2e7d32' }}>
+                        ${profitAfterTax.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <h2 style={{ margin: "32px 0 20px 0", fontSize: "20px", color: styles.primaryColor }}>
+                  Taxes and Fees
+                </h2>
+                <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
+                  <tbody>
+                    <tr>
+                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
+                        Tax (13% HST):
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
+                        ${taxOnCustomer.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
+                        Payment Processing Fee:
+                      </td>
+                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                        ${stripeFee.toFixed(2)} CAD
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                {customerTotalBeforeFee <= 0 && (
+                  <p style={{ 
+                    color: '#d32f2f', 
+                    fontSize: '14px', 
+                    marginTop: '10px',
+                    fontStyle: 'italic'
+                  }}>
+                    Note: Payment processing fees may still apply even if no revenue is collected.
+                  </p>
+                )}
+              </div>
             </div>
           </div>
+          <style>
+            {`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+              .customer-info-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 28px 24px;
+                margin-bottom: 10px;
+              }
+              .customer-info-field {
+                background: #f7f9fc;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(30,136,229,0.07);
+                padding: 18px 16px 12px 16px;
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+              }
+              .customer-info-label {
+                font-weight: 700;
+                color: #1e88e5;
+                margin-bottom: 8px;
+                font-size: 1.08rem;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              }
+              .customer-info-tooltip {
+                color: #666;
+                font-size: 14px;
+                cursor: pointer;
+                margin-left: 4px;
+              }
+              .customer-info-input {
+                padding: 12px 10px;
+                border-radius: 6px;
+                border: 1.5px solid #bdbdbd;
+                background: #fff;
+                color: #222;
+                font-size: 1.08rem;
+                font-family: inherit;
+                margin-top: 2px;
+                transition: border 0.2s;
+              }
+              .customer-info-input:focus {
+                border: 1.5px solid #1e88e5;
+                outline: none;
+              }
+              @media (max-width: 1200px) {
+                .customer-info-grid {
+                  grid-template-columns: repeat(2, 1fr);
+                }
+              }
+              @media (max-width: 700px) {
+                .customer-info-grid {
+                  grid-template-columns: 1fr;
+                }
+              }
+            `}
+          </style>
         </div>
-        <style>
-          {`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-            .customer-info-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 28px 24px;
-              margin-bottom: 10px;
-            }
-            .customer-info-field {
-              background: #f7f9fc;
-              border-radius: 10px;
-              box-shadow: 0 2px 8px rgba(30,136,229,0.07);
-              padding: 18px 16px 12px 16px;
-              display: flex;
-              flex-direction: column;
-              min-width: 0;
-            }
-            .customer-info-label {
-              font-weight: 700;
-              color: #1e88e5;
-              margin-bottom: 8px;
-              font-size: 1.08rem;
-              display: flex;
-              align-items: center;
-              gap: 6px;
-            }
-            .customer-info-tooltip {
-              color: #666;
-              font-size: 14px;
-              cursor: pointer;
-              margin-left: 4px;
-            }
-            .customer-info-input {
-              padding: 12px 10px;
-              border-radius: 6px;
-              border: 1.5px solid #bdbdbd;
-              background: #fff;
-              color: #222;
-              font-size: 1.08rem;
-              font-family: inherit;
-              margin-top: 2px;
-              transition: border 0.2s;
-            }
-            .customer-info-input:focus {
-              border: 1.5px solid #1e88e5;
-              outline: none;
-            }
-            @media (max-width: 1200px) {
-              .customer-info-grid {
-                grid-template-columns: repeat(2, 1fr);
-              }
-            }
-            @media (max-width: 700px) {
-              .customer-info-grid {
-                grid-template-columns: 1fr;
-              }
-            }
-          `}
-        </style>
-        {/* Place summary card at the end of the page */}
-        {products.length > 0 && (
-          <div style={{
-            backgroundColor: styles.cardBackground,
-            padding: "20px",
-            borderRadius: "8px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-            margin: "40px auto 0 auto",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "20px",
-            textAlign: "center",
-            maxWidth: "900px"
-          }}>
-            <div>
-              <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
-                Final Total
-              </h3>
-              <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.primaryColor }}>
-                ${finalCustomerTotal.toFixed(2)} CAD
-              </p>
-              <p style={{ margin: "5px 0 0", fontSize: "14px", color: "#666" }}>
-                {billingCycle === "annual" ? "per year" : "per month"}
-              </p>
-            </div>
-            <div>
-              <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
-                Estimated Profit
-              </h3>
-              <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.secondaryColor }}>
-                ${profitAfterTax.toFixed(2)}
-              </p>
-              <p style={{ margin: "5px 0 0", fontSize: "14px", color: "#666" }}>
-                After Tax ({billingCycle === "annual" ? "per year" : "per month"})
-              </p>
-            </div>
-            <div>
-              <h3 style={{ margin: "0 0 10px", color: styles.textColor, fontSize: "18px" }}>
-                Package
-              </h3>
-              <p style={{ margin: 0, fontSize: "24px", fontWeight: "bold", color: styles.textColor }}>
-                {getPackageName(products)}
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </ErrorBoundary>
   );
