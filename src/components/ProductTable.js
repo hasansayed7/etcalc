@@ -36,112 +36,101 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
             color: styles.tableHeaderText,
             textAlign: "left"
           }}>
-            <th style={{ padding: "15px", fontWeight: "500", width: "15%" }}>Product</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "20%" }}>Description</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "10%" }}>License</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center" }}>Quantity</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right" }}>Unit Price</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right" }}>Price</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center" }}>Margin (%)</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right" }}>Total</th>
-            <th style={{ padding: "15px", fontWeight: "500", width: "9%" }}>Actions</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "15%", fontSize: "14px" }}>Product</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "20%", fontSize: "14px" }}>Description</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "10%", fontSize: "14px" }}>License</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center", fontSize: "14px" }}>Quantity</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Unit Cost</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Unit Price</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center", fontSize: "14px" }}>Margin (%)</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Price</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center", fontSize: "14px" }}>Tax</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Tax Amount</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Total</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "9%", fontSize: "14px" }}>Action</th>
           </tr>
         </thead>
         <tbody>
           {products.map((p) => {
-            const row = calculateProductRow(p, p.qty, billingCycle);
+            // Calculate base unit cost (before tax)
+            const slab = (p.pricingSlabs || []).find(
+              slab => p.qty >= slab.minQty && p.qty <= slab.maxQty
+            ) || (p.pricingSlabs ? p.pricingSlabs[p.pricingSlabs.length - 1] : { unitCost: 0, margin: 0 });
+            const baseUnitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
+            const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
+            const unitPrice = baseUnitCost * 1.13;
+            const price = unitPrice * (1 + margin);
+            const total = price * 1.13;
             return (
               <tr key={p.name}>
-                <td style={{ padding: "15px", color: styles.textColor }}>{row.name}</td>
-                <td style={{ padding: "15px", color: styles.textColor }}>{row.description}</td>
-                <td style={{ padding: "15px", color: styles.textColor }}>
-                  {row.isDR
-                    ? (billingCycle === 'monthly' ? 'Monthly' : 'Annual')
-                    : row.license}
-                </td>
-                <td style={{ padding: "15px", textAlign: "center" }}>
+                <td style={{ padding: "15px", color: styles.textColor, fontSize: '12px' }}>{p.name}</td>
+                <td style={{ padding: "15px", color: styles.textColor, fontSize: '12px' }}>{p.description}</td>
+                <td style={{ padding: "15px", color: styles.textColor, fontSize: '12px' }}>{p.license}</td>
+                <td style={{ padding: "15px", textAlign: "center", minWidth: '120px', fontSize: '12px' }}>
                   <input
                     type="number"
                     min={1}
-                    value={row.qty}
-                    onChange={(e) => updateQty(row.name, Number(e.target.value))}
+                    value={p.qty}
+                    onChange={(e) => updateQty(p.name, Number(e.target.value))}
                     style={{ 
                       width: "70px",
-                      padding: "8px",
-                      borderRadius: "6px",
-                      border: `1px solid ${styles.inputBorder}`,
-                      backgroundColor: "#fff",
+                      padding: "10px 14px",
+                      border: 'none',
+                      borderRadius: "8px",
+                      backgroundColor: "#fafbfc",
                       color: styles.textColor,
                       fontSize: "15px",
                       textAlign: "center",
-                      marginRight: '20px',
+                      margin: 0,
+                      boxShadow: 'none',
+                      transition: 'box-shadow 0.2s',
                     }}
                   />
                 </td>
-                <td style={{ padding: "15px", textAlign: "right" }}>
-                  {row.isDR ? (
-                    <input
-                      type="number"
-                      value={row.unitCost}
-                      onChange={(e) => updateUnitCost(row.name, Number(e.target.value))}
-                      style={{
-                        width: "80px",
-                        padding: "8px",
-                        borderRadius: "6px",
-                        border: `1px solid ${styles.inputBorder}`,
-                        backgroundColor: "#fff",
-                        color: styles.textColor,
-                        fontSize: "15px",
-                        textAlign: "right",
-                        marginRight: '20px',
-                      }}
-                      step="0.01"
-                      min="0"
-                    />
-                  ) : (
-                    `$${row.unitCost.toFixed(2)}`
-                  )}
+                <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
+                  {`$${baseUnitCost.toFixed(2)}`}
                 </td>
-                <td style={{ padding: "15px", textAlign: "right" }}>
-                  {row.isDR ? (
-                    `$${row.price.toFixed(2)}`
-                  ) : (
-                    `$${row.price.toFixed(2)}`
-                  )}
+                <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
+                  {`$${unitPrice.toFixed(2)}`}
                 </td>
-                <td style={{ padding: "15px", textAlign: "center" }}>
+                <td style={{ padding: "15px", textAlign: "center", fontSize: '12px' }}>
                   <input
                     type="number"
-                    value={row.margin}
-                    onChange={e => updateMargin(row.name, Number(e.target.value))}
+                    value={(margin * 100).toFixed(0)}
+                    onChange={e => updateMargin(p.name, Number(e.target.value) / 100)}
                     style={{
                       width: "70px",
-                      padding: "8px",
-                      borderRadius: "6px",
-                      border: `1px solid ${styles.inputBorder}`,
-                      backgroundColor: row.isDR ? '#eee' : '#fff',
+                      padding: "10px 14px",
+                      border: 'none',
+                      borderRadius: "8px",
+                      backgroundColor: '#fafbfc',
                       color: styles.textColor,
                       fontSize: "15px",
                       textAlign: "center",
-                      marginRight: '20px',
+                      margin: 0,
+                      boxShadow: 'none',
+                      transition: 'box-shadow 0.2s',
                     }}
                     min="0"
                     max="100"
                     step="1"
-                    disabled={row.isDR}
-                    readOnly={row.isDR}
                   />
                 </td>
-                <td style={{ padding: "15px", textAlign: "right", color: styles.textColor }}>
-                  {row.isDR ? (
-                    `$${row.price.toFixed(2)}`
-                  ) : (
-                    `$${row.total.toFixed(2)}`
-                  )}
+                <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
+                  {`$${price.toFixed(2)}`}
                 </td>
-                <td style={{ padding: "15px" }}>
+                <td style={{ padding: "15px", textAlign: "center", fontSize: '12px' }}>
+                  13%
+                </td>
+                <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
+                  {`$${(price * 0.13).toFixed(2)}`}
+                </td>
+                <td style={{ padding: "15px", textAlign: "right", color: styles.textColor, fontSize: '12px' }}>
+                  {`$${total.toFixed(2)}`}
+                </td>
+                <td style={{ padding: "15px", textAlign: "center" }}>
                   <button
-                    onClick={() => removeProduct(row.name)}
+                    onClick={() => removeProduct(p.name)}
                     style={{
                       background: '#ffebee',
                       color: '#d32f2f',

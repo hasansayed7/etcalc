@@ -281,8 +281,7 @@ export const getPricingData = (product, qty) => {
     if (slab.unitCost < 0) {
       throw new Error(`Invalid unit cost (${slab.unitCost}) for product ${product.name}`);
     }
-    // Only enforce margin for non-homegrown products
-    if (!product.isHomeGrown && slab.margin < FINANCIAL_CONSTANTS.MIN_MARGIN) {
+    if (slab.margin < FINANCIAL_CONSTANTS.MIN_MARGIN) {
       throw new Error(`Margin (${slab.margin}) below minimum threshold for product ${product.name}`);
     }
   });
@@ -291,11 +290,7 @@ export const getPricingData = (product, qty) => {
     slab => qty >= slab.minQty && qty <= slab.maxQty
   ) || product.pricingSlabs[product.pricingSlabs.length - 1];
 
-  // For home-grown products, recommendedPrice = unitCost * 1.13
   let recommendedPrice = slab.recommendedPrice;
-  if (product.isHomeGrown) {
-    recommendedPrice = slab.unitCost * 1.13;
-  }
 
   // Calculate discounts
   const volumeDiscount = calculateVolumeDiscount(qty);
@@ -1139,22 +1134,16 @@ export const getRecommendations = (products, serviceCharge, billingCycle, profit
  * @returns {Object}
  */
 export function calculateProductRow(product, qty, billingCycle) {
-  const isDR = product.isHomeGrown;
   // Find the correct pricing slab
   const slab = (product.pricingSlabs || []).find(
     slab => qty >= slab.minQty && qty <= slab.maxQty
   ) || (product.pricingSlabs ? product.pricingSlabs[product.pricingSlabs.length - 1] : { unitCost: 0, margin: 0, recommendedPrice: 0 });
-  // For non-DR, display unitCost with 13% tax for UI
   let unitCost = typeof product.unitCost === 'number' ? product.unitCost : slab.unitCost;
-  if (!isDR) {
-    unitCost = unitCost * 1.13;
-  }
+  unitCost = unitCost * 1.13;
   const margin = typeof product.margin === 'number' ? product.margin : (slab.margin || 0);
-  // DR: price = unitCost * 1.13, others: unitCost * (1 + margin/100)
-  const price = isDR ? unitCost : unitCost * (1 + margin / 100);
-  // For DR, total is price (not price * qty), for others, total = price * qty * billingMultiplier
+  const price = unitCost * (1 + margin / 100);
   const billingMultiplier = billingCycle === 'annual' ? 12 : 1;
-  const total = isDR ? price : price * qty * billingMultiplier;
+  const total = price * qty * billingMultiplier;
   return {
     ...product,
     qty,
@@ -1162,7 +1151,6 @@ export function calculateProductRow(product, qty, billingCycle) {
     margin,
     price,
     total,
-    isDR,
     slab
   };
 } 

@@ -62,30 +62,7 @@ export default function App() {
 
   // Memoize allProducts
   const allProducts = useMemo(() => {
-    const productsList = [...PRODUCTS, ...customProducts]
-      .filter(p => !p.name.toLowerCase().includes("et dr for vms")); // Exclude "ET DR For VMs"
-
-    // Check if DR product exists in the list
-    const hasDRProduct = productsList.some(p => p.name.toLowerCase().includes("disaster recovery") || p.name === "DR");
-    if (!hasDRProduct) {
-      // Add the DR product dynamically
-      const drProduct = {
-        name: "Disaster Recovery",
-        description: "Disaster Recovery Solution",
-        license: "Annual",
-        unitCost: 0, // Default cost (can be updated)
-        margin: 0, // DR products have 0% margin
-        isHomeGrown: true, // Mark as DR product
-        pricingSlabs: [{
-          minQty: 1,
-          maxQty: 9999,
-          unitCost: 0, // Default cost (can be updated)
-          recommendedPrice: 0 // Default price (can be updated)
-        }]
-      };
-      return [...productsList, drProduct];
-    }
-    return productsList;
+    return [...PRODUCTS, ...customProducts];
   }, [PRODUCTS, customProducts]);
 
   // Calculate billing multiplier
@@ -307,7 +284,7 @@ export default function App() {
   // Cost to Pax8 (manually input or calculated)
   const pax8Total = productsWithCalc
     .filter(p => !p.isHomeGrown)
-    .reduce((sum, p) => sum + (p.unitCost * p.qty * 1.13), 0);
+    .reduce((sum, p) => sum + (p.unitCost * p.qty), 0);
 
   // Customer Amount (Before Tax)
   const customerSubtotal = products.reduce((sum, p) => {
@@ -1061,13 +1038,13 @@ export default function App() {
         {/* Right: Main Content */}
         <div style={{ flex: 1, minWidth: 0, paddingRight: 80 }}>
           {/* Top-right notification and vertical button group */}
-          <div
-            style={{
-              position: 'fixed',
+        <div
+          style={{
+            position: 'fixed',
               top: 16,
               right: 16,
               zIndex: 200,
-              display: 'flex',
+            display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-end',
               gap: '16px',
@@ -1102,49 +1079,49 @@ export default function App() {
                 </svg>
               </button>
               {/* Logout Button */}
-              <button
-                onClick={() => {
-                  setAuthenticated(false);
-                  localStorage.removeItem('authenticated');
-                }}
+          <button
+            onClick={() => {
+              setAuthenticated(false);
+              localStorage.removeItem('authenticated');
+            }}
                 className="action-button logout-button"
-                style={{
+            style={{
                   background: '#ffebee',
                   color: '#d32f2f',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+              border: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
                   fontSize: '20px',
                   boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
                   cursor: 'pointer',
-                }}
-                title="Logout"
-              >
+            }}
+            title="Logout"
+          >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M17 7L15.59 8.41L18.17 11H8V13H18.17L15.59 15.58L17 17L22 12L17 7ZM4 5H12V3H4C2.9 3 2 3.9 2 5V19C2 20.1 2.9 21 4 21H12V19H4V5Z" fill="#d32f2f"/>
                 </svg>
-              </button>
+          </button>
               {/* Dark Mode Toggle */}
-              <button
+          <button
                 onClick={() => setDarkMode((prev) => !prev)}
                 className="action-button dark-mode-toggle"
-                style={{
+            style={{
                   background: darkMode ? '#424242' : '#e3f2fd',
                   color: darkMode ? '#fff' : '#1976d2',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '44px',
-                  height: '44px',
+              border: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '20px',
                   boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(25,118,210,0.15)',
-                  cursor: 'pointer',
+              cursor: 'pointer',
                 }}
                 title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               >
@@ -1171,9 +1148,9 @@ export default function App() {
                   borderRadius: '50%',
                   width: '44px',
                   height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
                   fontSize: '20px',
                   boxShadow: '0 2px 8px rgba(211,47,47,0.15)',
                   cursor: isGeneratingPDF ? 'not-allowed' : 'pointer',
@@ -1189,22 +1166,22 @@ export default function App() {
                     <path d="M19 9H15V3H9V9H5L12 16L19 9ZM5 18V20H19V18H5Z" fill="#d32f2f"/>
                   </svg>
                 )}
-              </button>
+          </button>
               {/* Email Generation */}
-              <button
+          <button
                 onClick={handleSendEmail}
                 disabled={isGeneratingPDF || !customerEmail}
                 className="action-button email-button"
-                style={{
+            style={{
                   background: '#e3f2fd',
                   color: '#1976d2',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '44px',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+              border: 'none',
+              borderRadius: '50%',
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
                   fontSize: '20px',
                   boxShadow: '0 2px 8px rgba(25,118,210,0.15)',
                   cursor: isGeneratingPDF || !customerEmail ? 'not-allowed' : 'pointer',
@@ -1221,40 +1198,40 @@ export default function App() {
                     <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM19.6 8.25L12.53 12.67C12.21 12.87 11.79 12.87 11.47 12.67L4.4 8.25C4.15 8.09 4 7.82 4 7.53C4 6.86 4.73 6.46 5.3 6.81L12 11L18.7 6.81C19.27 6.46 20 6.86 20 7.53C20 7.82 19.85 8.09 19.6 8.25Z" fill="#1976d2"/>
                   </svg>
                 )}
-              </button>
+          </button>
             </div>
-          </div>
-          {/* Global dark mode field styles */}
-          {darkMode && (
-            <style>{`
-              input, select, textarea {
-                background: #232a36 !important;
-                color: #f5f6fa !important;
-                border: 1.5px solid #3a4256 !important;
-              }
-              input::placeholder, textarea::placeholder {
+        </div>
+        {/* Global dark mode field styles */}
+        {darkMode && (
+          <style>{`
+            input, select, textarea {
+              background: #232a36 !important;
+              color: #f5f6fa !important;
+              border: 1.5px solid #3a4256 !important;
+            }
+            input::placeholder, textarea::placeholder {
                 color: #b0b8c9 !important;
-                opacity: 1 !important;
-              }
-              select:disabled, input:disabled, textarea:disabled {
-                background: #232a36 !important;
-                color: #888 !important;
-              }
-              .card, .panel, .table, .summary {
-                background: #232a36 !important;
-                color: #f5f6fa !important;
-                border: 1.5px solid #2a3140 !important;
-              }
-              th, td {
-                color: #f5f6fa !important;
+              opacity: 1 !important;
+            }
+            select:disabled, input:disabled, textarea:disabled {
+              background: #232a36 !important;
+              color: #888 !important;
+            }
+            .card, .panel, .table, .summary {
+              background: #232a36 !important;
+              color: #f5f6fa !important;
+              border: 1.5px solid #2a3140 !important;
+            }
+            th, td {
+              color: #f5f6fa !important;
                 background: #232a36 !important;
               }
               tr {
                 background: #232a36 !important;
-              }
-              button {
-                font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif !important;
-              }
+            }
+            button {
+              font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif !important;
+            }
               /* Soft button tweaks for dark mode */
               .soft-btn-dark {
                 background: #2d2d3a !important;
@@ -1347,226 +1324,226 @@ export default function App() {
                 margin-top: 2px;
                 text-shadow: 0 0 4px #1976d2;
               }
-            `}</style>
-          )}
+          `}</style>
+        )}
+        <div style={{
+          position: 'relative',
+        }}>
           <div style={{
-            position: 'relative',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '30px',
+            padding: '15px',
+            backgroundColor: styles.cardBackground,
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '30px',
-              padding: '15px',
-              backgroundColor: styles.cardBackground,
-              borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <img 
-                  src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png"
-                  alt="ExcelyTech Logo" 
-                  style={{ height: '44px', width: 'auto', borderRadius: '4px', background: 'transparent' }}
-                />
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>{usCanLabel}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img 
+                src="https://excelytech.com/wp-content/uploads/2025/01/excelytech-logo.png"
+                alt="ExcelyTech Logo" 
+                style={{ height: '44px', width: 'auto', borderRadius: '4px', background: 'transparent' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
+                <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>{usCanLabel}</span>
                   <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{usCanTime}</span>
-                </div>
-                <div style={{ width: '1px', height: '28px', background: '#e0e0e0', borderRadius: '1px' }} />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>IND</span>
+              </div>
+              <div style={{ width: '1px', height: '28px', background: '#e0e0e0', borderRadius: '1px' }} />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '80px' }}>
+                <span style={{ fontWeight: 600, fontSize: '13px', color: styles.primaryColor, letterSpacing: '1px' }}>IND</span>
                   <span style={{ fontSize: '15px', fontFamily: 'monospace', marginTop: '2px', color: styles.textColor }}>{indTimeString}</span>
-                </div>
               </div>
             </div>
+          </div>
 
             
 
-            <div style={{
-              backgroundColor: styles.cardBackground,
-              padding: '20px',
-              borderRadius: '8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              marginBottom: '30px',
-              position: 'relative',
-            }}>
-              <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
-                Customer Information
-              </h2>
-              <button
+          <div style={{
+            backgroundColor: styles.cardBackground,
+            padding: '20px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            marginBottom: '30px',
+            position: 'relative',
+          }}>
+            <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
+              Customer Information
+            </h2>
+            <button
                 onClick={handleResetAll}
-                style={{
-                  position: 'absolute',
-                  top: 18,
-                  right: 18,
-                  padding: '6px 16px',
-                  background: '#e3f2fd',
-                  color: '#1976d2',
-                  border: '1.5px solid #90caf9',
-                  borderRadius: '6px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  zIndex: 2
-                }}
-              >
-                Reset
-              </button>
-              <div className="customer-info-grid">
-                <div className="customer-info-field">
-                  <label className="customer-info-label">
-                    Salutation
-                    <span className="customer-info-tooltip" title="Select the appropriate salutation for the customer">
-                      ⓘ
-                    </span>
-                  </label>
-                  <select
-                    value={salutation}
-                    onChange={(e) => setSalutation(e.target.value)}
-                    className="customer-info-input"
-                  >
-                    <option>Mr.</option>
-                    <option>Ms.</option>
-                    <option>Mrs.</option>
-                    <option>Miss</option>
-                    <option>Dr.</option>
-                    <option>Dear</option>
-                  </select>
-                </div>
-                <div className="customer-info-field">
-                  <label className="customer-info-label">
-                    Customer Name
-                    <span className="customer-info-tooltip" title="Enter the full name of the customer">
-                      ⓘ
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={handleCustomerNameChange}
-                    className="customer-info-input"
-                    placeholder="Enter customer name"
-                  />
-                  {validationError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{validationError}</span>}
-                </div>
-                <div className="customer-info-field">
-                  <label className="customer-info-label">
-                    Company
-                    <span className="customer-info-tooltip" title="Enter the customer's company name">
-                      ⓘ
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customerCompany}
-                    onChange={(e) => setCustomerCompany(e.target.value)}
-                    className="customer-info-input"
-                    placeholder="Enter company name"
-                  />
-                </div>
-                <div className="customer-info-field">
-                  <label className="customer-info-label">
-                    Email
-                    <span className="customer-info-tooltip" title="Enter the customer's email address">
-                      ⓘ
-                    </span>
-                  </label>
-                  <input
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => handleEmailChange(e)}
-                    className="customer-info-input"
-                    placeholder="Enter customer email"
-                  />
-                </div>
-                <div className="customer-info-field">
-                  <label className="customer-info-label">
-                    Phone
-                    <span className="customer-info-tooltip" title="Enter the customer's phone number">
-                      ⓘ
-                    </span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => handlePhoneChange(e)}
-                    className="customer-info-input"
-                    placeholder="Enter customer phone"
-                  />
-                </div>
-                <div className="customer-info-field">
-                  <label className="customer-info-label">
-                    Address
-                    <span className="customer-info-tooltip" title="Enter the customer's address">
-                      ⓘ
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                    className="customer-info-input"
-                    placeholder="Enter customer address"
-                  />
-                </div>
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                padding: '6px 16px',
+                background: '#e3f2fd',
+                color: '#1976d2',
+                border: '1.5px solid #90caf9',
+                borderRadius: '6px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontSize: '14px',
+                zIndex: 2
+              }}
+            >
+              Reset
+            </button>
+            <div className="customer-info-grid">
+              <div className="customer-info-field">
+                <label className="customer-info-label">
+                  Salutation
+                  <span className="customer-info-tooltip" title="Select the appropriate salutation for the customer">
+                    ⓘ
+                  </span>
+                </label>
+                <select
+                  value={salutation}
+                  onChange={(e) => setSalutation(e.target.value)}
+                  className="customer-info-input"
+                >
+                  <option>Mr.</option>
+                  <option>Ms.</option>
+                  <option>Mrs.</option>
+                  <option>Miss</option>
+                  <option>Dr.</option>
+                  <option>Dear</option>
+                </select>
+              </div>
+              <div className="customer-info-field">
+                <label className="customer-info-label">
+                  Customer Name
+                  <span className="customer-info-tooltip" title="Enter the full name of the customer">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={handleCustomerNameChange}
+                  className="customer-info-input"
+                  placeholder="Enter customer name"
+                />
+                {validationError && <span style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>{validationError}</span>}
+              </div>
+              <div className="customer-info-field">
+                <label className="customer-info-label">
+                  Company
+                  <span className="customer-info-tooltip" title="Enter the customer's company name">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={customerCompany}
+                  onChange={(e) => setCustomerCompany(e.target.value)}
+                  className="customer-info-input"
+                  placeholder="Enter company name"
+                />
+              </div>
+              <div className="customer-info-field">
+                <label className="customer-info-label">
+                  Email
+                  <span className="customer-info-tooltip" title="Enter the customer's email address">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => handleEmailChange(e)}
+                  className="customer-info-input"
+                  placeholder="Enter customer email"
+                />
+              </div>
+              <div className="customer-info-field">
+                <label className="customer-info-label">
+                  Phone
+                  <span className="customer-info-tooltip" title="Enter the customer's phone number">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => handlePhoneChange(e)}
+                  className="customer-info-input"
+                  placeholder="Enter customer phone"
+                />
+              </div>
+              <div className="customer-info-field">
+                <label className="customer-info-label">
+                  Address
+                  <span className="customer-info-tooltip" title="Enter the customer's address">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={customerAddress}
+                  onChange={(e) => setCustomerAddress(e.target.value)}
+                  className="customer-info-input"
+                  placeholder="Enter customer address"
+                />
               </div>
             </div>
-            <div style={{ 
-              backgroundColor: styles.cardBackground,
-              padding: "20px",
-              borderRadius: "8px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              marginBottom: "30px",
+          </div>
+          <div style={{ 
+            backgroundColor: styles.cardBackground,
+            padding: "20px",
+            borderRadius: "8px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            marginBottom: "30px",
+          }}>
+            <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
+              Add Product
+            </h2>
+            <div style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "16px",
+              alignItems: "flex-end",
+              width: '100%',
             }}>
-              <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
-                Add Product
-              </h2>
-              <div style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "16px",
-                alignItems: "flex-end",
-                width: '100%',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-end', flex: '2 1 400px', minWidth: 0, gap: 10 }}>
-                  <label style={{ 
-                    display: "block", 
-                    marginBottom: "8px", 
-                    fontWeight: "500",
-                    color: styles.textColor 
-                  }}>
-                    Product
-                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Select a product to add to the quote">
-                      ⓘ
-                    </span>
-                  </label>
-                  <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 6 }}>
-                    <select
-                      value={selectedProduct}
-                      onChange={(e) => setSelectedProduct(e.target.value)}
-                      style={{
-                        padding: "10px",
-                        minWidth: "220px",
-                        borderRadius: "6px",
-                        border: `1px solid ${styles.inputBorder}`,
-                        backgroundColor: "#fff",
-                        color: styles.textColor,
-                        fontSize: "16px",
-                        flex: '1 1 220px',
-                        marginRight: 8
-                      }}
-                    >
-                      {allProducts.map((p) => (
-                        <option key={p.name} value={p.name}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={handleAddProductClick}
+              <div style={{ display: 'flex', alignItems: 'flex-end', flex: '2 1 400px', minWidth: 0, gap: 10 }}>
+                <label style={{ 
+                  display: "block", 
+                  marginBottom: "8px", 
+                  fontWeight: "500",
+                  color: styles.textColor 
+                }}>
+                  Product
+                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Select a product to add to the quote">
+                    ⓘ
+                  </span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', flex: 1, gap: 6 }}>
+                  <select
+                    value={selectedProduct}
+                    onChange={(e) => setSelectedProduct(e.target.value)}
+                    style={{
+                      padding: "10px",
+                      minWidth: "220px",
+                      borderRadius: "6px",
+                      border: `1px solid ${styles.inputBorder}`,
+                      backgroundColor: "#fff",
+                      color: styles.textColor,
+                      fontSize: "16px",
+                      flex: '1 1 220px',
+                      marginRight: 8
+                    }}
+                  >
+                    {allProducts.map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleAddProductClick}
                       style={{
                         background: '#e3f2fd',
                         color: '#1976d2',
@@ -1586,161 +1563,161 @@ export default function App() {
                       aria-label="Add New Product"
                     >
                       <span style={{fontWeight: 700, fontSize: '28px', lineHeight: 1}}>+</span>
-                    </button>
-                    {/* Show remove buttons for custom products */}
-                    {customProducts.length > 0 && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {customProducts.map(p => (
-                          <button
-                            key={p.name}
-                            type="button"
-                            title={`Remove ${p.name}`}
-                            onClick={() => handleRemoveCustomProduct(p.name)}
-                            style={{ background: 'none', border: 'none', color: '#d32f2f', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
-                          >
-                            🗑️
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, flex: '0 0 auto' }}>
-                  <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: styles.textColor, whiteSpace: 'nowrap' }}>
-                    Quantity
-                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the number of units for this product">
-                      ⓘ
-                    </span>
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={qty}
-                    onChange={(e) => setQty(Number(e.target.value))}
-                    onWheel={handleQtyWheel}
-                    style={{
-                      padding: "10px",
-                      width: "80px",
-                      borderRadius: "6px",
-                      border: `1px solid ${styles.inputBorder}`,
-                      backgroundColor: "#fff",
-                      color: styles.textColor,
-                      fontSize: "16px",
-                      boxSizing: "border-box"
-                    }}
-                  />
-                  <button
-                    onClick={addProduct}
-                    style={{
-                      padding: "10px 18px",
-                      backgroundColor: styles.buttonBackground,
-                      color: styles.buttonText,
-                      border: "none",
-                      borderRadius: "6px",
-                      cursor: "pointer",
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      marginLeft: 4
-                    }}
-                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1565c0"}
-                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = styles.buttonBackground}
-                  >
-                    + Add
                   </button>
+                  {/* Show remove buttons for custom products */}
+                  {customProducts.length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      {customProducts.map(p => (
+                        <button
+                          key={p.name}
+                          type="button"
+                          title={`Remove ${p.name}`}
+                          onClick={() => handleRemoveCustomProduct(p.name)}
+                          style={{ background: 'none', border: 'none', color: '#d32f2f', fontSize: 18, cursor: 'pointer', padding: '0 4px' }}
+                        >
+                          🗑️
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-              {showAddProductForm && (
-                <form onSubmit={handleAddProductSubmit} style={{
-                  background: 'rgba(255,255,255,0.98)',
-                  borderRadius: 20,
-                  boxShadow: '0 8px 32px rgba(30,136,229,0.10)',
-                  padding: 36,
-                  maxWidth: 640,
-                  margin: '0 auto',
-                  marginTop: 32,
-                  marginBottom: 32,
-                  border: '1.5px solid #e3e8ee',
-                  transition: 'box-shadow 0.2s'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
-                    <span style={{ fontSize: 32, color: '#1976d2', marginRight: 14 }}>🛒</span>
-                    <h2 style={{ margin: 0, fontWeight: 800, fontSize: 26, color: '#1976d2', letterSpacing: 1 }}>Add New Product</h2>
-                  </div>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 24,
-                    marginBottom: 28
-                  }}>
-                    <div>
-                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Product Name</label>
-                      <input type="text" placeholder="Name" value={newProduct.name} onChange={e => handleNewProductChange('name', e.target.value)}
-                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                      <small style={{ color: '#888' }}>Enter a unique product name.</small>
-                    </div>
-                    <div>
-                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Description</label>
-                      <input type="text" placeholder="Description" value={newProduct.description} onChange={e => handleNewProductChange('description', e.target.value)}
-                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                      <small style={{ color: '#888' }}>Briefly describe the product.</small>
-                    </div>
-                    <div>
-                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>License</label>
-                      <input type="text" placeholder="License" value={newProduct.license} onChange={e => handleNewProductChange('license', e.target.value)}
-                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                      <small style={{ color: '#888' }}>E.g., Annual, Perpetual, etc.</small>
-                    </div>
-                    <div>
-                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Unit Cost</label>
-                      <input type="number" placeholder="Unit Cost" value={newProduct.unitCost} min={0} onChange={e => handleNewProductChange('unitCost', e.target.value)}
-                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                      <small style={{ color: '#888' }}>Enter the cost per unit.</small>
-                    </div>
-                    {newProduct.name !== 'Disaster Recovery' && newProduct.name !== 'DR' && (
-                      <div>
-                        <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Margin (%)</label>
-                        <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)}
-                          style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
-                        <small style={{ color: '#888' }}>Recommended: 35% or higher.</small>
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: 18, justifyContent: 'flex-end', marginTop: 12 }}>
-                    <button type="submit" style={{
-                      background: 'linear-gradient(90deg, #1976d2 60%, #64b5f6 100%)',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: 10,
-                      padding: '12px 36px',
-                      fontWeight: 800,
-                      fontSize: 18,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(25,118,210,0.10)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      transition: 'background 0.2s'
-                    }}>
-                      <span style={{ fontSize: 20 }}>➕</span> Add
-                    </button>
-                    <button type="button" onClick={() => setShowAddProductForm(false)} style={{
-                      background: '#fff',
-                      color: '#1976d2',
-                      border: '1.5px solid #90caf9',
-                      borderRadius: 10,
-                      padding: '12px 36px',
-                      fontWeight: 800,
-                      fontSize: 18,
-                      cursor: 'pointer'
-                    }}>
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, flex: '0 0 auto' }}>
+                <label style={{ display: "block", marginBottom: "8px", fontWeight: "500", color: styles.textColor, whiteSpace: 'nowrap' }}>
+                  Quantity
+                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the number of units for this product">
+                    ⓘ
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={qty}
+                  onChange={(e) => setQty(Number(e.target.value))}
+                  onWheel={handleQtyWheel}
+                  style={{
+                    padding: "10px",
+                    width: "80px",
+                    borderRadius: "6px",
+                    border: `1px solid ${styles.inputBorder}`,
+                    backgroundColor: "#fff",
+                    color: styles.textColor,
+                    fontSize: "16px",
+                    boxSizing: "border-box"
+                  }}
+                />
+                <button
+                  onClick={addProduct}
+                  style={{
+                    padding: "10px 18px",
+                    backgroundColor: styles.buttonBackground,
+                    color: styles.buttonText,
+                    border: "none",
+                    borderRadius: "6px",
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    marginLeft: 4
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#1565c0"}
+                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = styles.buttonBackground}
+                >
+                  + Add
+                </button>
+              </div>
             </div>
+            {showAddProductForm && (
+              <form onSubmit={handleAddProductSubmit} style={{
+                background: 'rgba(255,255,255,0.98)',
+                borderRadius: 20,
+                boxShadow: '0 8px 32px rgba(30,136,229,0.10)',
+                padding: 36,
+                maxWidth: 640,
+                margin: '0 auto',
+                marginTop: 32,
+                marginBottom: 32,
+                border: '1.5px solid #e3e8ee',
+                transition: 'box-shadow 0.2s'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
+                  <span style={{ fontSize: 32, color: '#1976d2', marginRight: 14 }}>🛒</span>
+                  <h2 style={{ margin: 0, fontWeight: 800, fontSize: 26, color: '#1976d2', letterSpacing: 1 }}>Add New Product</h2>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 24,
+                  marginBottom: 28
+                }}>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Product Name</label>
+                    <input type="text" placeholder="Name" value={newProduct.name} onChange={e => handleNewProductChange('name', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>Enter a unique product name.</small>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Description</label>
+                    <input type="text" placeholder="Description" value={newProduct.description} onChange={e => handleNewProductChange('description', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>Briefly describe the product.</small>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>License</label>
+                    <input type="text" placeholder="License" value={newProduct.license} onChange={e => handleNewProductChange('license', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>E.g., Annual, Perpetual, etc.</small>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Unit Cost</label>
+                    <input type="number" placeholder="Unit Cost" value={newProduct.unitCost} min={0} onChange={e => handleNewProductChange('unitCost', e.target.value)}
+                      style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                    <small style={{ color: '#888' }}>Enter the cost per unit.</small>
+                  </div>
+                  {newProduct.name !== 'Disaster Recovery' && newProduct.name !== 'DR' && (
+                    <div>
+                      <label style={{ fontWeight: 700, marginBottom: 8, display: 'block', color: '#333' }}>Margin (%)</label>
+                      <input type="number" placeholder="Margin (%)" value={newProduct.margin} min={0} max={100} onChange={e => handleNewProductChange('margin', e.target.value)}
+                        style={{ width: '100%', padding: 14, borderRadius: 10, border: '1.5px solid #bdbdbd', marginBottom: 4, fontSize: 16, transition: 'border 0.2s' }} />
+                      <small style={{ color: '#888' }}>Recommended: 35% or higher.</small>
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 18, justifyContent: 'flex-end', marginTop: 12 }}>
+                  <button type="submit" style={{
+                    background: 'linear-gradient(90deg, #1976d2 60%, #64b5f6 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 10,
+                    padding: '12px 36px',
+                    fontWeight: 800,
+                    fontSize: 18,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px rgba(25,118,210,0.10)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    transition: 'background 0.2s'
+                  }}>
+                    <span style={{ fontSize: 20 }}>➕</span> Add
+                  </button>
+                  <button type="button" onClick={() => setShowAddProductForm(false)} style={{
+                    background: '#fff',
+                    color: '#1976d2',
+                    border: '1.5px solid #90caf9',
+                    borderRadius: 10,
+                    padding: '12px 36px',
+                    fontWeight: 800,
+                    fontSize: 18,
+                    cursor: 'pointer'
+                  }}>
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
 
-            {products.length > 0 && (
+          {products.length > 0 && (
               <ProductTable
                 products={products}
                 billingCycle={billingCycle}
@@ -1750,99 +1727,48 @@ export default function App() {
                 updateMargin={updateMargin}
                 removeProduct={removeProduct}
               />
-            )}
+          )}
 
+          <div style={{ 
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "30px",
+            marginBottom: 0,
+            alignItems: "stretch"
+          }}>
             <div style={{ 
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "30px",
-              marginBottom: 0,
-              alignItems: "stretch"
+              backgroundColor: styles.cardBackground,
+              padding: "32px",
+              borderRadius: "8px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "22px",
+              minHeight: '480px'
             }}>
-              <div style={{ 
-                backgroundColor: styles.cardBackground,
-                padding: "32px",
-                borderRadius: "8px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "22px",
-                minHeight: '480px'
-              }}>
-                <h2 style={{ margin: "0 0 10px", fontSize: "20px", color: styles.primaryColor }}>
-                  Price Configuration
-                </h2>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <label style={{ 
-                    fontWeight: "500",
-                    color: styles.textColor,
-                    marginBottom: "4px"
-                  }}>
-                    Professional Services & Support
-                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the one-time fee for implementation and support">
-                      ⓘ
-                    </span>
-                  </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '100%', flexWrap: 'wrap' }}>
-                    <input
-                      type="number"
-                      min={0}
-                      value={serviceCharge}
-                      onChange={(e) => setServiceCharge(Number(e.target.value))}
-                      style={{ 
-                        padding: "12px 14px", 
-                        width: "120px",
-                        borderRadius: "8px",
-                        border: `1.5px solid ${styles.inputBorder}`,
-                        backgroundColor: darkMode ? "#232a36" : "#f8fafc",
-                        color: styles.textColor,
-                        fontSize: "16px",
-                        boxSizing: "border-box",
-                        marginBottom: "2px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
-                      }}
-                    />
-                    <span style={{ color: '#555', fontWeight: 500, fontSize: '15px' }}>CAD</span>
-                    <span style={{
-                      background: '#e3f2fd',
-                      color: '#1976d2',
-                      borderRadius: '6px',
-                      padding: '10px 14px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      marginLeft: '10px',
-                      border: '1px solid #bbdefb',
-                      maxWidth: '320px',
-                      wordBreak: 'break-word',
-                      whiteSpace: 'normal',
-                      flex: '1 1 220px',
-                      minWidth: '120px',
-                      boxSizing: 'border-box',
-                      display: 'inline-block',
-                      textAlign: 'center',
-                      marginTop: '6px'
-                    }}>
-                      Enter the total amount for implementation and support for the entire year.
-                    </span>
-                  </div>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <label style={{ 
-                    fontWeight: "500",
-                    color: styles.textColor,
-                    marginBottom: "4px"
-                  }}>
-                    Billing Cycle
-                    <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Choose between monthly or annual billing">
-                      ⓘ
-                    </span>
-                  </label>
-                  <select
-                    value={billingCycle}
-                    onChange={(e) => setBillingCycle(e.target.value)}
+              <h2 style={{ margin: "0 0 10px", fontSize: "20px", color: styles.primaryColor }}>
+                Price Configuration
+              </h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <label style={{ 
+                  fontWeight: "500",
+                  color: styles.textColor,
+                  marginBottom: "4px"
+                }}>
+                  Professional Services & Support
+                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Enter the one-time fee for implementation and support">
+                    ⓘ
+                  </span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '100%', flexWrap: 'wrap' }}>
+                  <input
+                    type="number"
+                    min={0}
+                    value={serviceCharge}
+                    onChange={(e) => setServiceCharge(Number(e.target.value))}
                     style={{ 
                       padding: "12px 14px", 
-                      width: "100%",
+                      width: "120px",
                       borderRadius: "8px",
                       border: `1.5px solid ${styles.inputBorder}`,
                       backgroundColor: darkMode ? "#232a36" : "#f8fafc",
@@ -1852,110 +1778,161 @@ export default function App() {
                       marginBottom: "2px",
                       boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
                     }}
-                  >
-                    <option value="monthly">Monthly</option>
-                    <option value="annual">Annual</option>
-                  </select>
+                  />
+                  <span style={{ color: '#555', fontWeight: 500, fontSize: '15px' }}>CAD</span>
+                  <span style={{
+                    background: '#e3f2fd',
+                    color: '#1976d2',
+                    borderRadius: '6px',
+                    padding: '10px 14px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    marginLeft: '10px',
+                    border: '1px solid #bbdefb',
+                    maxWidth: '320px',
+                    wordBreak: 'break-word',
+                    whiteSpace: 'normal',
+                    flex: '1 1 220px',
+                    minWidth: '120px',
+                    boxSizing: 'border-box',
+                    display: 'inline-block',
+                    textAlign: 'center',
+                    marginTop: '6px'
+                  }}>
+                    Enter the total amount for implementation and support for the entire year.
+                  </span>
                 </div>
-                <h3 style={{ margin: "18px 0 0 0", fontSize: "18px", color: styles.primaryColor }}>
-                  Business Growth Suggestions
-                </h3>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <label style={{ 
+                  fontWeight: "500",
+                  color: styles.textColor,
+                  marginBottom: "4px"
+                }}>
+                  Billing Cycle
+                  <span style={{ marginLeft: "5px", color: "#666", fontSize: "14px", cursor: "pointer" }} title="Choose between monthly or annual billing">
+                    ⓘ
+                  </span>
+                </label>
+                <select
+                  value={billingCycle}
+                  onChange={(e) => setBillingCycle(e.target.value)}
+                  style={{ 
+                    padding: "12px 14px", 
+                    width: "100%",
+                    borderRadius: "8px",
+                    border: `1.5px solid ${styles.inputBorder}`,
+                    backgroundColor: darkMode ? "#232a36" : "#f8fafc",
+                    color: styles.textColor,
+                    fontSize: "16px",
+                    boxSizing: "border-box",
+                    marginBottom: "2px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.04)"
+                  }}
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="annual">Annual</option>
+                </select>
+              </div>
+              <h3 style={{ margin: "18px 0 0 0", fontSize: "18px", color: styles.primaryColor }}>
+                Business Growth Suggestions
+              </h3>
                 <ul style={{ paddingLeft: "20px", margin: 0, color: styles.textColor, listStyleType: "none" }}>
-                  {recommendations.map((rec, index) => (
-                    <li key={index} style={{ 
-                      marginBottom: "12px", 
-                      fontSize: "15px", 
-                      position: "relative",
+                {recommendations.map((rec, index) => (
+                  <li key={index} style={{ 
+                    marginBottom: "12px", 
+                    fontSize: "15px", 
+                    position: "relative",
                       paddingLeft: "25px",
                       color: styles.textColor
-                    }}>
-                      <span style={{
-                        position: "absolute",
-                        left: 0,
-                        top: "3px",
+                  }}>
+                    <span style={{
+                      position: "absolute",
+                      left: 0,
+                      top: "3px",
                         color: styles.textColor,
-                        fontSize: "18px"
-                      }}>
-                        •
-                      </span>
-                      {rec}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                      fontSize: "18px"
+                    }}>
+                      •
+                    </span>
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-              <div style={{ 
-                backgroundColor: hasLowMargin ? '#ffeaea' : styles.cardBackground,
-                border: hasLowMargin ? '2px solid #d32f2f' : undefined,
-                color: hasLowMargin ? '#d32f2f' : styles.textColor,
-                padding: "20px",
-                borderRadius: "8px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                minHeight: '480px'
-              }}>
-                <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
-                  Financial Summary
-                </h2>
+            <div style={{ 
+              backgroundColor: hasLowMargin ? '#ffeaea' : styles.cardBackground,
+              border: hasLowMargin ? '2px solid #d32f2f' : undefined,
+              color: hasLowMargin ? '#d32f2f' : styles.textColor,
+              padding: "20px",
+              borderRadius: "8px",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              minHeight: '480px'
+            }}>
+              <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
+                Financial Summary
+              </h2>
                 <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
-                  <tbody>
-                    <tr>
+                <tbody>
+                  <tr>
                       <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
-                        Our Cost to Pax8 (incl. 13% tax):
-                      </td>
+                      Our Cost to Pax8 (incl. 13% tax):
+                    </td>
                       <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
-                        ${pax8Total.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                    <tr>
+                      ${pax8Total.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                  <tr>
                       <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                        Professional Services & Support:
-                      </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                        ${proFeeForCalc.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                    <tr>
+                      Professional Services & Support:
+                    </td>
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                      ${proFeeForCalc.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                  <tr>
                       <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                        Customer Amount (Before Tax):
-                      </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                        ${customerSubtotal.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                    <tr>
+                      Customer Amount (Before Tax):
+                    </td>
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                      ${customerSubtotal.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                  <tr>
                       <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
-                        Customer Total (Before Fee):
-                      </td>
+                      Customer Total (Before Fee):
+                    </td>
                       <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
-                        ${customerTotalBeforeFee.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                    <tr>
+                      ${customerTotalBeforeFee.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                  <tr>
                       <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
-                        Customer Total (After Payment Processing Fee):
-                      </td>
+                      Customer Total (After Payment Processing Fee):
+                    </td>
                       <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
-                        ${finalCustomerTotal.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                    <tr>
+                      ${finalCustomerTotal.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                  <tr>
                       <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                        Estimated Profit Before Tax:
-                      </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                        ${profitBeforeTax.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                    <tr>
+                      Estimated Profit Before Tax:
+                    </td>
+                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
+                      ${profitBeforeTax.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                  <tr>
                       <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                        Estimated Profit After Tax:
-                      </td>
+                      Estimated Profit After Tax:
+                    </td>
                       <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 'bold', color: '#2e7d32' }}>
-                        ${profitAfterTax.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                      ${profitAfterTax.toFixed(2)} CAD
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
                 <h2 style={{ margin: "32px 0 20px 0", fontSize: "20px", color: styles.primaryColor }}>
                   Taxes and Fees
                 </h2>
@@ -1979,84 +1956,94 @@ export default function App() {
                     </tr>
                   </tbody>
                 </table>
-                {customerTotalBeforeFee <= 0 && (
-                  <p style={{ 
-                    color: '#d32f2f', 
-                    fontSize: '14px', 
-                    marginTop: '10px',
-                    fontStyle: 'italic'
-                  }}>
-                    Note: Payment processing fees may still apply even if no revenue is collected.
-                  </p>
-                )}
-              </div>
+              {customerTotalBeforeFee <= 0 && (
+                <p style={{ 
+                  color: '#d32f2f', 
+                  fontSize: '14px', 
+                  marginTop: '10px',
+                  fontStyle: 'italic'
+                }}>
+                  Note: Payment processing fees may still apply even if no revenue is collected.
+                </p>
+              )}
             </div>
           </div>
-          <style>
-            {`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
+        </div>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+            .customer-info-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 28px 24px;
+              margin-bottom: 10px;
+            }
+            .customer-info-field {
+              background: #f7f9fc;
+              border-radius: 10px;
+              box-shadow: 0 2px 8px rgba(30,136,229,0.07);
+              padding: 18px 16px 12px 16px;
+              display: flex;
+              flex-direction: column;
+              min-width: 0;
+            }
+            .customer-info-label {
+              font-weight: 700;
+              color: #1e88e5;
+              margin-bottom: 8px;
+                font-size: 0.78rem;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+            }
+            .customer-info-tooltip {
+              color: #666;
+                font-size: 11px;
+              cursor: pointer;
+              margin-left: 4px;
+            }
+            .customer-info-input {
+              padding: 12px 10px;
+              border-radius: 6px;
+              border: 1.5px solid #bdbdbd;
+              background: #fff;
+              color: #222;
+                font-size: 0.83rem;
+              font-family: inherit;
+              margin-top: 2px;
+              transition: border 0.2s;
+            }
+            .customer-info-input:focus {
+              border: 1.5px solid #1e88e5;
+              outline: none;
+            }
+            @media (max-width: 1200px) {
               .customer-info-grid {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 28px 24px;
-                margin-bottom: 10px;
+                grid-template-columns: repeat(2, 1fr);
               }
-              .customer-info-field {
-                background: #f7f9fc;
-                border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(30,136,229,0.07);
-                padding: 18px 16px 12px 16px;
-                display: flex;
-                flex-direction: column;
-                min-width: 0;
+            }
+            @media (max-width: 700px) {
+              .customer-info-grid {
+                grid-template-columns: 1fr;
               }
-              .customer-info-label {
-                font-weight: 700;
-                color: #1e88e5;
-                margin-bottom: 8px;
-                font-size: 1.08rem;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-              }
-              .customer-info-tooltip {
-                color: #666;
-                font-size: 14px;
-                cursor: pointer;
-                margin-left: 4px;
-              }
-              .customer-info-input {
-                padding: 12px 10px;
-                border-radius: 6px;
-                border: 1.5px solid #bdbdbd;
-                background: #fff;
-                color: #222;
-                font-size: 1.08rem;
-                font-family: inherit;
-                margin-top: 2px;
-                transition: border 0.2s;
-              }
-              .customer-info-input:focus {
-                border: 1.5px solid #1e88e5;
-                outline: none;
-              }
-              @media (max-width: 1200px) {
-                .customer-info-grid {
-                  grid-template-columns: repeat(2, 1fr);
-                }
-              }
-              @media (max-width: 700px) {
-                .customer-info-grid {
-                  grid-template-columns: 1fr;
-                }
-              }
-            `}
-          </style>
+            }
+          `}
+        </style>
         </div>
       </div>
     </ErrorBoundary>
   );
 }
+
+// Add a global style block for font enhancement
+<style>{`
+  body, input, select, textarea, button, label, h1, h2, h3, h4, h5, h6, p, span, th, td, div {
+    font-family: 'Inter', 'Roboto', 'Segoe UI', Arial, sans-serif !important;
+    font-smooth: always;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+`}</style>
