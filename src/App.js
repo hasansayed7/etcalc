@@ -935,6 +935,18 @@ export default function App() {
     return <Login onLogin={() => setAuthenticated(true)} />;
   }
 
+  // Calculate the sum of the 'Price' column (before tax) for all products
+  const productPriceTotal = products.map(p => {
+    const slab = (p.pricingSlabs || []).find(
+      slab => p.qty >= slab.minQty && p.qty <= slab.maxQty
+    ) || (p.pricingSlabs ? p.pricingSlabs[p.pricingSlabs.length - 1] : { unitCost: 0, margin: 0 });
+    const baseUnitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
+    const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
+    const unitPrice = baseUnitCost * 1.13;
+    const price = unitPrice * (1 + margin);
+    return price * p.qty;
+  }).reduce((sum, val) => sum + val, 0);
+
   return (
     <ErrorBoundary>
       <div
@@ -999,7 +1011,7 @@ export default function App() {
           }}>
             <h3 style={{ margin: '0 0 8px', color: styles.textColor, fontSize: '17px', fontWeight: 700 }}>Final Total</h3>
             <p style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: styles.primaryColor }}>
-              ${products.length > 0 ? finalCustomerTotal.toFixed(2) : '0.00'} CAD
+              ${products.length > 0 ? productPriceTotal.toFixed(2) : '0.00'} CAD
             </p>
             <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#666' }}>
               {billingCycle === 'annual' ? 'per year' : 'per month'}
