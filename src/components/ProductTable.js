@@ -72,7 +72,7 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
                       border: `1px solid ${styles.inputBorder}`,
                       backgroundColor: "#fff",
                       color: styles.textColor,
-                      fontSize: "16px",
+                      fontSize: "15px",
                       textAlign: "center",
                       marginRight: '20px',
                     }}
@@ -91,7 +91,7 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
                         border: `1px solid ${styles.inputBorder}`,
                         backgroundColor: "#fff",
                         color: styles.textColor,
-                        fontSize: "16px",
+                        fontSize: "15px",
                         textAlign: "right",
                         marginRight: '20px',
                       }}
@@ -121,7 +121,7 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
                       border: `1px solid ${styles.inputBorder}`,
                       backgroundColor: row.isDR ? '#eee' : '#fff',
                       color: styles.textColor,
-                      fontSize: "16px",
+                      fontSize: "15px",
                       textAlign: "center",
                       marginRight: '20px',
                     }}

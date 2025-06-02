@@ -1144,10 +1144,14 @@ export function calculateProductRow(product, qty, billingCycle) {
   const slab = (product.pricingSlabs || []).find(
     slab => qty >= slab.minQty && qty <= slab.maxQty
   ) || (product.pricingSlabs ? product.pricingSlabs[product.pricingSlabs.length - 1] : { unitCost: 0, margin: 0, recommendedPrice: 0 });
-  const unitCost = typeof product.unitCost === 'number' ? product.unitCost : slab.unitCost;
+  // For non-DR, display unitCost with 13% tax for UI
+  let unitCost = typeof product.unitCost === 'number' ? product.unitCost : slab.unitCost;
+  if (!isDR) {
+    unitCost = unitCost * 1.13;
+  }
   const margin = typeof product.margin === 'number' ? product.margin : (slab.margin || 0);
   // DR: price = unitCost * 1.13, others: unitCost * (1 + margin/100)
-  const price = isDR ? unitCost * 1.13 : unitCost * (1 + margin / 100);
+  const price = isDR ? unitCost : unitCost * (1 + margin / 100);
   // For DR, total is price (not price * qty), for others, total = price * qty * billingMultiplier
   const billingMultiplier = billingCycle === 'annual' ? 12 : 1;
   const total = isDR ? price : price * qty * billingMultiplier;

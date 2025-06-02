@@ -13,7 +13,7 @@ const notificationStyle = {
   borderRadius: '10px',
   boxShadow: '0 4px 24px rgba(30,136,229,0.12)',
   fontWeight: 600,
-  fontSize: '1.08rem',
+  fontSize: '0.98rem',
   display: 'flex',
   alignItems: 'center',
   gap: '12px',
@@ -63,7 +63,7 @@ export default function Notification({ message, onClose, type = 'info' }) {
     <>
       <style>{keyframes}</style>
       <div style={style}>
-        <span style={{fontSize: '1.3em', marginRight: 8}}>{icon}</span>
+        <span style={{fontSize: '1.2em', marginRight: 8}}>{icon}</span>
         {message}
       </div>
     </>
