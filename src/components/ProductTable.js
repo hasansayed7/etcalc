@@ -43,6 +43,7 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
             <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Unit Cost</th>
             <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Unit Price</th>
             <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center", fontSize: "14px" }}>Margin (%)</th>
+            <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Margin Amount</th>
             <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Price</th>
             <th style={{ padding: "15px", fontWeight: "500", width: "8%", textAlign: "center", fontSize: "14px" }}>Tax</th>
             <th style={{ padding: "15px", fontWeight: "500", width: "10%", textAlign: "right", fontSize: "14px" }}>Tax Amount</th>
@@ -58,18 +59,24 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
             ) || (p.pricingSlabs ? p.pricingSlabs[p.pricingSlabs.length - 1] : { unitCost: 0, margin: 0 });
             const baseUnitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
             const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
-            const unitPrice = baseUnitCost * 1.13;
-            const price = unitPrice * (1 + margin);
-            const total = price * 1.13;
+            const marginValid = margin !== null && margin !== undefined && !isNaN(margin);
+            let unitPrice = '--', price = '--', marginAmount = '--', taxAmount = '--', total = '--';
+            if (marginValid) {
+              unitPrice = (baseUnitCost * 1.13).toFixed(2);
+              price = (baseUnitCost * 1.13 * (1 + margin)).toFixed(2);
+              marginAmount = ((baseUnitCost * 1.13 * margin) * p.qty).toFixed(2);
+              taxAmount = (baseUnitCost * 1.13 * (1 + margin) * 0.13).toFixed(2);
+              total = (baseUnitCost * 1.13 * (1 + margin) * 1.13).toFixed(2);
+            }
             return (
               <tr key={p.name}>
                 <td style={{ padding: "15px", color: styles.textColor, fontSize: '12px' }}>{p.name}</td>
                 <td style={{ padding: "15px", color: styles.textColor, fontSize: '12px' }}>{p.description}</td>
                 <td style={{ padding: "15px", color: styles.textColor, fontSize: '12px' }}>{p.license}</td>
-                <td style={{ padding: "15px", textAlign: "center", minWidth: '120px', fontSize: '12px' }}>
+                <td style={{ padding: "15px", textAlign: "left", minWidth: '120px', fontSize: '12px' }}>
                   <input
-                    type="number"
-                    min={1}
+                    type="text"
+                    className="no-spinner"
                     value={p.qty}
                     onChange={(e) => updateQty(p.name, Number(e.target.value))}
                     style={{ 
@@ -79,8 +86,8 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
                       borderRadius: "8px",
                       backgroundColor: "#fafbfc",
                       color: styles.textColor,
-                      fontSize: "15px",
-                      textAlign: "center",
+                      fontSize: "12px",
+                      textAlign: "left",
                       margin: 0,
                       boxShadow: 'none',
                       transition: 'box-shadow 0.2s',
@@ -91,13 +98,17 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
                   {`$${baseUnitCost.toFixed(2)}`}
                 </td>
                 <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
-                  {`$${unitPrice.toFixed(2)}`}
+                  {marginValid ? `$${unitPrice}` : '--'}
                 </td>
-                <td style={{ padding: "15px", textAlign: "center", fontSize: '12px' }}>
+                <td style={{ padding: "15px", textAlign: "left", fontSize: '12px' }}>
                   <input
-                    type="number"
-                    value={(margin * 100).toFixed(0)}
-                    onChange={e => updateMargin(p.name, Number(e.target.value) / 100)}
+                    type="text"
+                    className="no-spinner"
+                    value={marginValid ? (margin * 100).toFixed(0) : ''}
+                    onChange={e => {
+                      const val = e.target.value.trim();
+                      updateMargin(p.name, val === '' ? null : Number(val) / 100);
+                    }}
                     style={{
                       width: "70px",
                       padding: "10px 14px",
@@ -105,28 +116,31 @@ const ProductTable = ({ products, billingCycle, styles, updateQty, updateUnitCos
                       borderRadius: "8px",
                       backgroundColor: '#fafbfc',
                       color: styles.textColor,
-                      fontSize: "15px",
-                      textAlign: "center",
+                      fontSize: "12px",
+                      textAlign: "left",
                       margin: 0,
                       boxShadow: 'none',
                       transition: 'box-shadow 0.2s',
+                      appearance: 'none',
+                      MozAppearance: 'textfield',
+                      WebkitAppearance: 'none',
                     }}
-                    min="0"
-                    max="100"
-                    step="1"
                   />
                 </td>
                 <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
-                  {`$${price.toFixed(2)}`}
+                  {marginValid ? `$${marginAmount}` : '--'}
+                </td>
+                <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
+                  {marginValid ? `$${price}` : '--'}
                 </td>
                 <td style={{ padding: "15px", textAlign: "center", fontSize: '12px' }}>
                   13%
                 </td>
                 <td style={{ padding: "15px", textAlign: "right", fontSize: '12px' }}>
-                  {`$${(price * 0.13).toFixed(2)}`}
+                  {marginValid ? `$${taxAmount}` : '--'}
                 </td>
                 <td style={{ padding: "15px", textAlign: "right", color: styles.textColor, fontSize: '12px' }}>
-                  {`$${total.toFixed(2)}`}
+                  {marginValid ? `$${total}` : '--'}
                 </td>
                 <td style={{ padding: "15px", textAlign: "center" }}>
                   <button

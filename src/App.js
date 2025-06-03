@@ -74,7 +74,12 @@ export default function App() {
 
   // Memoize calculations
   const calculations = useMemo(() => {
-    const subtotal = products.reduce((sum, p) => {
+    const validProducts = products.filter(p => {
+      const slab = (p.pricingSlabs || [])[0];
+      const margin = slab && typeof slab.margin === 'number' ? slab.margin : null;
+      return margin !== null && !isNaN(margin) && margin >= 0.2;
+    });
+    const subtotal = validProducts.reduce((sum, p) => {
       const pricingData = getPricingData(p, p.qty);
       return sum + pricingData.recommendedPrice * p.qty;
     }, 0) * billingMultiplier;
@@ -209,10 +214,12 @@ export default function App() {
     setProducts(prev =>
       prev.map(p => {
         if (p.name === name) {
+          // If blank or invalid, set margin to null
+          const marginValue = (newMargin === null || newMargin === undefined || isNaN(newMargin)) ? null : newMargin;
           const updatedSlabs = p.pricingSlabs.map(slab => ({
             ...slab,
-            margin: newMargin,
-            recommendedPrice: slab.unitCost * (1 + newMargin / 100)
+            margin: marginValue,
+            recommendedPrice: slab.unitCost * (1 + (marginValue || 0))
           }));
           return { ...p, pricingSlabs: updatedSlabs };
         }
@@ -307,7 +314,16 @@ export default function App() {
   const profitTaxRate = 0.13; // 13% profit tax if applicable
   const profitAfterTax = profitBeforeTax * (1 - profitTaxRate);
 
-  const recommendations = getRecommendations(products, serviceCharge, billingCycle, profitBeforeTax);
+  const recommendations = getRecommendations(
+    products.filter(p => {
+      const slab = (p.pricingSlabs || [])[0];
+      const margin = slab && typeof slab.margin === 'number' ? slab.margin : null;
+      return margin !== null && !isNaN(margin) && margin >= 0.2;
+    }),
+    serviceCharge,
+    billingCycle,
+    profitBeforeTax
+  );
 
   const showNotification = (message) => {
     setNotification(message);
@@ -413,7 +429,12 @@ export default function App() {
       currentY += splitBilling.length * 4.5;
   
       const tableColumn = ["Product Name", "Description", "Qty", "Price", "Total"];
-      const productRows = products.map(p => [
+      const validProducts = products.filter(p => {
+        const slab = (p.pricingSlabs || [])[0];
+        const margin = slab && typeof slab.margin === 'number' ? slab.margin : null;
+        return margin !== null && !isNaN(margin) && margin >= 0.2;
+      });
+      const productRows = validProducts.map(p => [
         p.name,
         p.description,
         p.qty.toString(),
@@ -640,6 +661,13 @@ export default function App() {
       setIsGeneratingPDF(true);
       setValidationError("");
   
+      // Add this block to define validProducts for email content
+      const validProducts = products.filter(p => {
+        const slab = (p.pricingSlabs || [])[0];
+        const margin = slab && typeof slab.margin === 'number' ? slab.margin : null;
+        return margin !== null && !isNaN(margin) && margin >= 0.2;
+      });
+  
       // Generate QR code with summary info
       const qrText = `Customer: ${customerName || 'N/A'}\nCompany: ${customerCompany || 'N/A'}\nTotal: $${finalCustomerTotal.toFixed(2)} CAD\nDate: ${new Date().toLocaleDateString('en-CA')}`;
       const qrDataUrl = await QRCode.toDataURL(qrText, { width: 80, margin: 1 });
@@ -698,7 +726,7 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
-                ${products.map(p => `
+                ${validProducts.map(p => `
                   <tr style="border-bottom: 1px solid #e0e0e0;">
                     <td style="padding: 8px; text-align: left;">${p.name}</td>
                     <td style="padding: 8px; text-align: left;">${p.description}</td>
@@ -819,8 +847,10 @@ export default function App() {
 
   // Check if any product margin is below 20%
   const hasLowMargin = products.some(p => {
-    const pricingData = getPricingData(p, p.qty);
-    return !p.isHomeGrown && pricingData.margin < productMarginThreshold;
+    const slab = (p.pricingSlabs || [])[0];
+    const margin = slab && typeof slab.margin === 'number' ? slab.margin : null;
+    if (margin === null || isNaN(margin)) return false;
+    return !p.isHomeGrown && margin < productMarginThreshold;
   });
 
   // Add a handler for resetting all fields
@@ -936,16 +966,22 @@ export default function App() {
   }
 
   // Calculate the sum of the 'Price' column (before tax) for all products
-  const productPriceTotal = products.map(p => {
-    const slab = (p.pricingSlabs || []).find(
-      slab => p.qty >= slab.minQty && p.qty <= slab.maxQty
-    ) || (p.pricingSlabs ? p.pricingSlabs[p.pricingSlabs.length - 1] : { unitCost: 0, margin: 0 });
-    const baseUnitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
-    const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
-    const unitPrice = baseUnitCost * 1.13;
-    const price = unitPrice * (1 + margin);
-    return price * p.qty;
-  }).reduce((sum, val) => sum + val, 0);
+  const productPriceTotal = products
+    .filter(p => {
+      const slab = (p.pricingSlabs || [])[0];
+      const margin = slab && typeof slab.margin === 'number' ? slab.margin : null;
+      return margin !== null && !isNaN(margin) && margin >= 0.2;
+    })
+    .map(p => {
+      const slab = (p.pricingSlabs || []).find(
+        slab => p.qty >= slab.minQty && p.qty <= slab.maxQty
+      ) || (p.pricingSlabs ? p.pricingSlabs[p.pricingSlabs.length - 1] : { unitCost: 0, margin: 0 });
+      const baseUnitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
+      const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
+      const unitPrice = baseUnitCost * 1.13;
+      const price = unitPrice * (1 + margin);
+      return price * p.qty;
+    }).reduce((sum, val) => sum + val, 0);
 
   return (
     <ErrorBoundary>

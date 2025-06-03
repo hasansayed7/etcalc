@@ -214,3 +214,14 @@ h1, h2, h3 {
 .app.dark .summary-row.total {
   border-top-color: var(--dark-accent);
 }
+
+/* Hide number input spinners for all browsers */
+input[type="number"].no-spinner::-webkit-inner-spin-button,
+input[type="number"].no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"].no-spinner {
+  -moz-appearance: textfield; /* Firefox */
+}
