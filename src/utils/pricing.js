@@ -281,8 +281,8 @@ export const getPricingData = (product, qty) => {
     if (slab.unitCost < 0) {
       throw new Error(`Invalid unit cost (${slab.unitCost}) for product ${product.name}`);
     }
-    if (slab.margin < FINANCIAL_CONSTANTS.MIN_MARGIN) {
-      throw new Error(`Margin (${slab.margin}) below minimum threshold for product ${product.name}`);
+    if (slab.margin === null || slab.margin === undefined || isNaN(slab.margin)) {
+      slab.margin = 0;
     }
   });
 

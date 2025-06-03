@@ -1909,10 +1909,9 @@ export default function App() {
               </ul>
             </div>
 
-            <div style={{ 
-              backgroundColor: hasLowMargin ? '#ffeaea' : styles.cardBackground,
-              border: hasLowMargin ? '2px solid #d32f2f' : undefined,
-              color: hasLowMargin ? '#d32f2f' : styles.textColor,
+            <div style={{
+              backgroundColor: styles.cardBackground,
+              color: styles.textColor,
               padding: "20px",
               borderRadius: "8px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
