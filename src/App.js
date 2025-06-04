@@ -2077,7 +2077,7 @@ export default function App() {
                         </td>
                       </tr>
                       <tr>
-                        <td style={{ padding: "8px 0", color: styles.textColor }}>TAX 2</td>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>TAX 2 AMOUNT</td>
                         <td style={{ padding: "8px 0", textAlign: "right" }}>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                             <span style={{
