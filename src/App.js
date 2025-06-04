@@ -850,7 +850,8 @@ export default function App() {
     const slab = (p.pricingSlabs || [])[0];
     const margin = slab && typeof slab.margin === 'number' ? slab.margin : null;
     if (margin === null || isNaN(margin)) return false;
-    return !p.isHomeGrown && margin < productMarginThreshold;
+    // margin is stored as a decimal (e.g., 0.35 for 35%), so compare margin * 100
+    return !p.isHomeGrown && (margin * 100) < productMarginThreshold;
   });
 
   // Add a handler for resetting all fields
@@ -1910,12 +1911,14 @@ export default function App() {
             </div>
 
             <div style={{
-              backgroundColor: styles.cardBackground,
-              color: styles.textColor,
+              backgroundColor: hasLowMargin ? '#d32f2f' : styles.cardBackground,
+              color: hasLowMargin ? '#fff' : styles.textColor,
+              border: hasLowMargin ? '2px solid #b71c1c' : `1.5px solid ${styles.borderColor}`,
               padding: "20px",
               borderRadius: "8px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-              minHeight: '480px'
+              minHeight: '480px',
+              transition: 'background 0.3s, color 0.3s, border 0.3s',
             }}>
               <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
                 Financial Summary
