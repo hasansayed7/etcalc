@@ -60,6 +60,9 @@ export default function App() {
   const [productMarginThreshold, setProductMarginThreshold] = useState(20); // default 20%
   const [packageMarginThreshold, setPackageMarginThreshold] = useState(15); // default 15%
 
+  // Add state for Tax 2 percentage
+  const [tax2Percent, setTax2Percent] = useState(13);
+
   // Memoize allProducts
   const allProducts = useMemo(() => {
     return [...PRODUCTS, ...customProducts];
@@ -1048,7 +1051,28 @@ export default function App() {
           }}>
             <h3 style={{ margin: '0 0 8px', color: styles.textColor, fontSize: '17px', fontWeight: 700 }}>Final Total</h3>
             <p style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: styles.primaryColor }}>
-              ${products.length > 0 ? productPriceTotal.toFixed(2) : '0.00'} CAD
+              {(() => {
+                // Calculate TOTAL WITH MARGIN as in the Financial Summary
+                let unitPriceTotal = 0, marginAmountTotal = 0;
+                products.forEach(p => {
+                  const slab = (p.pricingSlabs || [])[0];
+                  const qty = p.qty || 1;
+                  const unitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
+                  const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
+                  const tax1 = unitCost * 0.13;
+                  const unitPrice = unitCost + tax1;
+                  const marginAmount = unitPrice * margin * qty;
+                  unitPriceTotal += unitPrice * qty;
+                  marginAmountTotal += marginAmount;
+                });
+                unitPriceTotal *= billingCycle === 'annual' ? 12 : 1;
+                marginAmountTotal *= billingCycle === 'annual' ? 12 : 1;
+                const totalWithMargin = unitPriceTotal + marginAmountTotal;
+                return `${products.length > 0 ? totalWithMargin.toFixed(2) : '0.00'} CAD`;
+              })()}
+            </p>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#888' }}>
+              Before tax and processing fees
             </p>
             <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#666' }}>
               {billingCycle === 'annual' ? 'per year' : 'per month'}
@@ -1064,10 +1088,27 @@ export default function App() {
           }}>
             <h3 style={{ margin: '0 0 8px', color: styles.textColor, fontSize: '17px', fontWeight: 700 }}>Estimated Profit</h3>
             <p style={{ margin: 0, fontSize: '22px', fontWeight: 'bold', color: styles.secondaryColor }}>
-              ${products.length > 0 ? profitAfterTax.toFixed(2) : '0.00'}
+              <span style={{ color: darkMode ? '#7fd7c4' : '#43a047' }}>
+                {(() => {
+                  // Calculate marginAmountTotal as in the Financial Summary
+                  let marginAmountTotal = 0;
+                  products.forEach(p => {
+                    const slab = (p.pricingSlabs || [])[0];
+                    const qty = p.qty || 1;
+                    const unitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
+                    const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
+                    const tax1 = unitCost * 0.13;
+                    const unitPrice = unitCost + tax1;
+                    const marginAmount = unitPrice * margin * qty;
+                    marginAmountTotal += marginAmount;
+                  });
+                  marginAmountTotal *= billingCycle === 'annual' ? 12 : 1;
+                  return `$${products.length > 0 ? marginAmountTotal.toFixed(2) : '0.00'} CAD`;
+                })()}
+              </span>
             </p>
             <p style={{ margin: '5px 0 0', fontSize: '13px', color: '#666' }}>
-              After Tax ({billingCycle === 'annual' ? 'per year' : 'per month'})
+              Actual Margin Amount ({billingCycle === 'annual' ? 'per year' : 'per month'})
             </p>
           </div>
           <div className="summary-card" style={{
@@ -1372,7 +1413,7 @@ export default function App() {
                 font-family: monospace !important;
                 margin-top: 2px;
                 text-shadow: 0 0 4px #1976d2;
-              }
+            }
           `}</style>
         )}
         <div style={{
@@ -1910,7 +1951,7 @@ export default function App() {
               </ul>
             </div>
 
-            <div style={{
+            <div style={{ 
               backgroundColor: hasLowMargin ? '#d32f2f' : styles.cardBackground,
               color: hasLowMargin ? '#fff' : styles.textColor,
               border: hasLowMargin ? '2px solid #b71c1c' : `1.5px solid ${styles.borderColor}`,
@@ -1919,103 +1960,173 @@ export default function App() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               minHeight: '480px',
               transition: 'background 0.3s, color 0.3s, border 0.3s',
+              fontSize: '13px',
             }}>
               <h2 style={{ margin: "0 0 20px", fontSize: "20px", color: styles.primaryColor }}>
                 Financial Summary
               </h2>
-                <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
+              {/* --- Begin new breakdown table --- */}
+              {(() => {
+                // Helper calculations for all products
+                let unitCostTotal = 0, tax1Total = 0, unitPriceTotal = 0, marginAmountTotal = 0;
+                let marginPercentDisplay = [];
+                products.forEach(p => {
+                  const slab = (p.pricingSlabs || [])[0];
+                  const qty = p.qty || 1;
+                  const unitCost = typeof p.unitCost === 'number' ? p.unitCost : slab.unitCost;
+                  const margin = typeof p.margin === 'number' ? p.margin : (slab.margin || 0);
+                  const tax1 = unitCost * 0.13;
+                  const unitPrice = unitCost + tax1;
+                  const marginAmount = unitPrice * margin * qty;
+                  unitCostTotal += unitCost * qty;
+                  tax1Total += tax1 * qty;
+                  unitPriceTotal += unitPrice * qty;
+                  marginAmountTotal += marginAmount;
+                  marginPercentDisplay.push(`${(margin * 100).toFixed(2)}%`);
+                });
+                unitCostTotal *= billingCycle === 'annual' ? 12 : 1;
+                tax1Total *= billingCycle === 'annual' ? 12 : 1;
+                unitPriceTotal *= billingCycle === 'annual' ? 12 : 1;
+                marginAmountTotal *= billingCycle === 'annual' ? 12 : 1;
+                const totalWithMargin = unitPriceTotal + marginAmountTotal;
+                const tax2 = totalWithMargin * (tax2Percent / 100);
+                const totalWithTax = totalWithMargin + tax2;
+                const stripeFees = products.length > 0 ? totalWithTax * 0.029 : 0;
+                const totalStripeFees = products.length > 0 ? stripeFees + 0.30 : 0;
+                const netTotal = totalWithTax + totalStripeFees;
+                return (
+                  <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, marginBottom: 0, fontSize: '13px' }}>
                 <tbody>
-                  <tr>
-                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
-                      Our Cost to Pax8 (incl. 13% tax):
-                    </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
-                      ${pax8Total.toFixed(2)} CAD
-                    </td>
+                      <tr><td colSpan={2} style={{ fontWeight: 700, fontSize: 16, padding: '16px 0 6px', color: styles.primaryColor }}>COST</td></tr>
+                      <tr>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>UNIT COST</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor }}>{unitCostTotal.toFixed(2)} CAD</td>
                   </tr>
                   <tr>
-                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Professional Services & Support:
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${proFeeForCalc.toFixed(2)} CAD
-                    </td>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>TAX 1 (13% on Unit Cost)</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor }}>{tax1Total.toFixed(2)} CAD</td>
                   </tr>
                   <tr>
-                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Customer Amount (Before Tax):
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${customerSubtotal.toFixed(2)} CAD
-                    </td>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>UNIT PRICE (Cost to Pax8)</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor }}>{unitPriceTotal.toFixed(2)} CAD</td>
                   </tr>
                   <tr>
-                      <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
-                      Customer Total (Before Fee):
-                    </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
-                      ${customerTotalBeforeFee.toFixed(2)} CAD
-                    </td>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>MARGIN AMOUNT</td>
+                        <td style={{ padding: "8px 0", textAlign: "right" }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <span style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: darkMode ? '#232a36' : '#e3f2fd',
+                              color: styles.primaryColor,
+                              border: `2px solid ${styles.primaryColor}`,
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              fontWeight: 700,
+                              fontSize: '1.08em',
+                              boxShadow: '0 2px 8px rgba(30,136,229,0.07)',
+                              minWidth: '90px',
+                              maxWidth: '90px',
+                              height: '32px',
+                            }}>
+                              {marginAmountTotal.toFixed(2)} CAD
+                            </span>
+                          </div>
+                        </td>
                   </tr>
                   <tr>
-                      <td style={{ padding: "10px 0", color: styles.textColor, textAlign: 'left', fontWeight: 400 }}>
-                      Customer Total (After Payment Processing Fee):
-                    </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, fontWeight: 400 }}>
-                      ${finalCustomerTotal.toFixed(2)} CAD
-                    </td>
+                        <td style={{ padding: "8px 0", color: styles.textColor, fontWeight: 600 }}>TOTAL WITH MARGIN</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor, fontWeight: 600 }}>{totalWithMargin.toFixed(2)} CAD</td>
+                  </tr>
+                      <tr><td colSpan={2} style={{ fontWeight: 700, fontSize: 16, padding: '16px 0 6px', color: styles.primaryColor }}>TAXATION</td></tr>
+                      <tr>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>TAX 2 (%)</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              pattern="^\\d*(\\.\\d{0,2})?$"
+                              value={tax2Percent}
+                              onChange={e => {
+                                const val = e.target.value.replace(/[^\d.]/g, '');
+                                setTax2Percent(val === '' ? '' : Number(val));
+                              }}
+                              style={{
+                                padding: '6px 12px',
+                                borderRadius: '8px',
+                                border: `2px solid ${styles.primaryColor}`,
+                                background: darkMode ? '#232a36' : '#e3f2fd',
+                                color: styles.primaryColor,
+                                fontWeight: 700,
+                                fontSize: '1.08em',
+                                textAlign: 'right',
+                                fontFamily: 'inherit',
+                                marginRight: 2,
+                                boxShadow: '0 2px 8px rgba(30,136,229,0.07)',
+                                minWidth: '90px',
+                                maxWidth: '90px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>TAX 2</td>
+                        <td style={{ padding: "8px 0", textAlign: "right" }}>
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            <span style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: darkMode ? '#232a36' : '#e3f2fd',
+                              color: styles.primaryColor,
+                              border: `2px solid ${styles.primaryColor}`,
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              fontWeight: 700,
+                              fontSize: '1.08em',
+                              boxShadow: '0 2px 8px rgba(30,136,229,0.07)',
+                              minWidth: '90px',
+                              maxWidth: '90px',
+                              height: '32px',
+                            }}>
+                              {tax2.toFixed(2)} CAD
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: "8px 0", color: styles.textColor, fontWeight: 600 }}>TOTAL WITH TAX</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor, fontWeight: 600 }}>{totalWithTax.toFixed(2)} CAD</td>
+                  </tr>
+                      <tr><td colSpan={2} style={{ fontWeight: 700, fontSize: 16, padding: '16px 0 6px', color: styles.primaryColor }}>PROCESSING FEES</td></tr>
+                      <tr>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>STRIPE FEES (2.9% + $0.30)</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor }}>{stripeFees.toFixed(2)} CAD</td>
                   </tr>
                   <tr>
-                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Estimated Profit Before Tax:
-                    </td>
-                    <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                      ${profitBeforeTax.toFixed(2)} CAD
-                    </td>
-                  </tr>
+                        <td style={{ padding: "8px 0", color: styles.textColor }}>TOTAL STRIPE FEES</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor }}>{totalStripeFees.toFixed(2)} CAD</td>
+                      </tr>
                   <tr>
-                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                      Estimated Profit After Tax:
-                    </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", fontWeight: 'bold', color: '#2e7d32' }}>
-                      ${profitAfterTax.toFixed(2)} CAD
-                    </td>
+                        <td style={{ padding: "8px 0", color: styles.textColor, fontWeight: 700 }}>NET TOTAL</td>
+                        <td style={{ padding: "8px 0", textAlign: "right", color: styles.textColor, fontWeight: 700 }}>{netTotal.toFixed(2)} CAD</td>
                   </tr>
+                      <tr>
+                        
+                  </tr>
+                  
                 </tbody>
               </table>
-                <h2 style={{ margin: "32px 0 20px 0", fontSize: "20px", color: styles.primaryColor }}>
-                  Taxes and Fees
-                </h2>
-                <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0 }}>
-                  <tbody>
-                    <tr>
-                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left', width: '60%' }}>
-                        Tax (13% HST):
-                      </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor, width: '40%' }}>
-                        ${taxOnCustomer.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style={{ padding: "10px 0", fontWeight: 500, color: styles.textColor, textAlign: 'left' }}>
-                        Payment Processing Fee:
-                      </td>
-                      <td style={{ padding: "10px 0", textAlign: "right", color: styles.textColor }}>
-                        ${stripeFee.toFixed(2)} CAD
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              {customerTotalBeforeFee <= 0 && (
-                <p style={{ 
-                  color: '#d32f2f', 
-                  fontSize: '14px', 
-                  marginTop: '10px',
-                  fontStyle: 'italic'
-                }}>
-                  Note: Payment processing fees may still apply even if no revenue is collected.
-                </p>
-              )}
+                );
+              })()}
+              {/* --- End new breakdown table --- */}
             </div>
           </div>
         </div>

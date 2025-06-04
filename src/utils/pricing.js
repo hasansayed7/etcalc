@@ -1124,7 +1124,7 @@ export const getRecommendations = (products, serviceCharge, billingCycle, profit
   }
 
   return recommendations;
-};
+}; 
 
 /**
  * Calculate all derived fields for a product row (unit cost, margin, price, total, etc.)
