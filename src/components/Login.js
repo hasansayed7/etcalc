@@ -174,7 +174,7 @@ export default function Login({ onLogin }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (username === 'etadmin' && password === '123456') {
+    if (username === 'etadmin' && password === 'Fugqanl140!') {
       setError('');
       onLogin();
     } else {
